@@ -11,7 +11,7 @@ EntryNoteTab::EntryNoteTab(QWidget *parent)
     : QWidget(parent)
 {
 
-    auto descriptionLabel = new QLabel(tr("There are currently no contacts in your address book. "
+    noteLabel = new QLabel(tr("There are currently no contacts in your address book. "
                                           "\nClick Add to add new contacts."));
 
     auto addButton = new QPushButton(tr("Add"));
@@ -19,7 +19,7 @@ EntryNoteTab::EntryNoteTab(QWidget *parent)
     connect(addButton, &QAbstractButton::clicked, this, &EntryNoteTab::addEntry);
 
     auto mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(descriptionLabel);
+    mainLayout->addWidget(noteLabel);
     mainLayout->addWidget(addButton, 0, Qt::AlignCenter);
 
     setLayout(mainLayout);
@@ -28,4 +28,8 @@ EntryNoteTab::EntryNoteTab(QWidget *parent)
 void EntryNoteTab::addEntry()
 {
 
+}
+
+void EntryNoteTab::updateLabel(const QString &qs){
+    noteLabel->setText(qs);
 }

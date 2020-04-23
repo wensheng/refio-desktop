@@ -20,12 +20,15 @@ class EntryNoteTab : public QWidget
 
 public:
     EntryNoteTab(QWidget *parent = nullptr);
+    void updateLabel(const QString &);
 
 public slots:
     void addEntry();
 
 signals:
     void sendDetails(const QString &name, const QString &address);
+private:
+    QLabel *noteLabel;
 };
 
 #endif

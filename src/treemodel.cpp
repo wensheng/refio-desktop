@@ -94,6 +94,19 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
     return item->data(index.column());
 }
 
+QVector<QVariant> TreeModel::getRowData(const QModelIndex &index) const
+{
+    if (!index.isValid())
+        return QVector<QVariant>();
+
+    TreeItem *item = getItem(index);
+    QVector<QVariant> result(item->columnCount());
+    for(int i=0; i<item->columnCount(); i++){
+        result.push_back(item->data(i));
+    }
+    return result;
+}
+
 //! [3]
 Qt::ItemFlags TreeModel::flags(const QModelIndex &index) const
 {

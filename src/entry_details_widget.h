@@ -10,6 +10,7 @@
 #include <QTabWidget>
 #include "entry_info_tab.h"
 #include "entry_note_tab.h"
+#include "treeitem.h"
 
 QT_BEGIN_NAMESPACE
 class QItemSelectionModel;
@@ -23,6 +24,7 @@ public:
     EntryDetailsWidget(QWidget *parent = nullptr);
     EntryInfoTab *entryInfoTab;
     EntryNoteTab *entryNoteTab;
+    void updateDetail(const TreeItem *data);
 
 //public slots:
 

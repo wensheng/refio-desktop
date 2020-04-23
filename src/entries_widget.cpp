@@ -4,6 +4,8 @@
 ****************************************************************************/
 
 #include "entries_widget.h"
+#include "entry_details_widget.h"
+#include "treeitem.h"
 #include "treemodel.h"
 
 #include <QtWidgets>
@@ -124,6 +126,7 @@ void EntriesWidget::removeRow()
 
 void EntriesWidget::updateActions()
 {
+    TreeModel *model = (TreeModel *) treeView->model();
     const bool hasSelection = !treeView->selectionModel()->selection().isEmpty();
     //removeRowAction->setEnabled(hasSelection);
 
@@ -131,6 +134,15 @@ void EntriesWidget::updateActions()
     //insertRowAction->setEnabled(hasCurrent);
 
     if (hasCurrent) {
+        QModelIndex idx = treeView->selectionModel()->currentIndex();
+        //QVector<QVariant> rowData = model->getRowData(idx);
+        TreeItem *treeItem = model->getItem(idx);
+        //TODO combine
+        QSplitter *pw = (QSplitter*)this->parentWidget();
+        EntryDetailsWidget *detailsWidget = (EntryDetailsWidget*)(pw->widget(1));
+        qDebug() << detailsWidget;
+        //detailsWidget->updateDetail(rowData);
+        detailsWidget->updateDetail(treeItem);
         treeView->closePersistentEditor(treeView->selectionModel()->currentIndex());
 
         const int row = treeView->selectionModel()->currentIndex().row();

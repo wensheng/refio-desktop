@@ -20,12 +20,16 @@ class EntryInfoTab : public QWidget
 
 public:
     EntryInfoTab(QWidget *parent = nullptr);
+    void updateLabel(const QString &);
 
 public slots:
     void addEntry();
 
 signals:
     void sendDetails(const QString &name, const QString &address);
+
+private:
+    QLabel *infoLabel;
 };
 
 #endif

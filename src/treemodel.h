@@ -22,9 +22,9 @@ public:
     TreeModel(const QStringList &headers, const QString &data,
               QObject *parent = nullptr);
     ~TreeModel();
-//! [0] //! [1]
 
     QVariant data(const QModelIndex &index, int role) const override;
+    QVector<QVariant> getRowData(const QModelIndex &index) const;
     QVariant headerData(int section, Qt::Orientation orientation,
                         int role = Qt::DisplayRole) const override;
 
@@ -34,9 +34,7 @@ public:
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
-//! [1]
 
-//! [2]
     Qt::ItemFlags flags(const QModelIndex &index) const override;
     bool setData(const QModelIndex &index, const QVariant &value,
                  int role = Qt::EditRole) override;
@@ -47,10 +45,10 @@ public:
                     const QModelIndex &parent = QModelIndex()) override;
     bool removeRows(int position, int rows,
                     const QModelIndex &parent = QModelIndex()) override;
+    TreeItem *getItem(const QModelIndex &index) const;
 
 private:
     void setupModelData(const QStringList &lines, TreeItem *parent);
-    TreeItem *getItem(const QModelIndex &index) const;
 
     TreeItem *rootItem;
 };

@@ -11,7 +11,7 @@ EntryInfoTab::EntryInfoTab(QWidget *parent)
     : QWidget(parent)
 {
 
-    auto descriptionLabel = new QLabel(tr("There are currently no contacts in your address book. "
+    infoLabel = new QLabel(tr("There are currently no contacts in your address book. "
                                           "\nClick Add to add new contacts."));
 
     auto addButton = new QPushButton(tr("Add"));
@@ -19,7 +19,7 @@ EntryInfoTab::EntryInfoTab(QWidget *parent)
     connect(addButton, &QAbstractButton::clicked, this, &EntryInfoTab::addEntry);
 
     auto mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(descriptionLabel);
+    mainLayout->addWidget(infoLabel);
     mainLayout->addWidget(addButton, 0, Qt::AlignCenter);
 
     setLayout(mainLayout);
@@ -28,4 +28,8 @@ EntryInfoTab::EntryInfoTab(QWidget *parent)
 void EntryInfoTab::addEntry()
 {
 
+}
+
+void EntryInfoTab::updateLabel(const QString &qs){
+    infoLabel->setText(qs);
 }
