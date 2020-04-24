@@ -10,6 +10,7 @@
 #include <QMenuBar>
 #include <QDesktopWidget>
 #include <QScreen>
+#include <QDebug>
 #include <QGuiApplication>
 
 #include "about_refio_dialog.h"
@@ -20,6 +21,7 @@ MainWindow::MainWindow()
       referenceWidget(new ReferenceWidget),
       slipboxWidget(new SlipboxWidget)
 {
+    // referenceWidget is instantiated first, database connection is set up there
     isSlipbox = false;
     isStacked = false;
     slipboxWidget->hide();
@@ -347,3 +349,4 @@ void MainWindow::updateActions(const QItemSelection &selection)
         editAct->setEnabled(false);
     }
 }
+

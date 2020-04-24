@@ -56,6 +56,7 @@
 
 #include <QMainWindow>
 #include <QDesktopServices>
+#include <QSqlDatabase>
 
 class MainWindow : public QMainWindow
 {

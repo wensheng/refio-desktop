@@ -7,6 +7,7 @@
 #define COLLECTIONS_WIDGET_H
 
 #include <QWidget>
+#include <QSqlDatabase>
 
 QT_BEGIN_NAMESPACE
 class QTreeView;
@@ -32,7 +33,8 @@ private slots:
 private:
     QTreeView *treeView;
     QStandardItemModel *standardItemModel;
-
+    void setup_db();
+    QSqlDatabase db;
 };
 
 #endif

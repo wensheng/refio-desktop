@@ -4,14 +4,25 @@
 ****************************************************************************/
 
 #include "collections_widget.h"
+#include "mainwindow.h"
 
 #include <QtWidgets>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
 
 CollectionsWidget::CollectionsWidget(QWidget *parent)
     : QWidget(parent),
       treeView(new QTreeView(this)),
       standardItemModel(new QStandardItemModel(this))
 {
+    setup_db();
+    QSqlQuery query(db);
+    query.prepare("SELECT id, title, parent, children FROM ref_collections");
+    if(!query.exec()){
+        qDebug() << query.lastError().text();
+    }
+
     auto tb = new QToolBar();
 
     const QIcon newIcon = QIcon::fromTheme("document-new", QIcon(":/images/new.png"));
@@ -34,6 +45,7 @@ CollectionsWidget::CollectionsWidget(QWidget *parent)
     saveAct->setStatusTip(tr("Save the document to disk"));
     connect(saveAct, &QAction::triggered, this, &CollectionsWidget::closeFile);
     tb->addAction(saveAct);
+
 
     /* copied from example/widgets/tutorials/7_selections */
     standardItemModel->setHeaderData(0, Qt::Horizontal, "My Library");
@@ -106,4 +118,27 @@ void CollectionsWidget::selectionChanged(const QItemSelection &newSelection, con
     QString showString = QString("%1, Level %2").arg(selectedText)
                          .arg(hierarchyLevel);
     setWindowTitle(showString);
+}
+
+void CollectionsWidget::setup_db()
+{
+    QString appDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir dir(appDataDir);
+    if(!dir.exists()){
+        dir.mkpath(".");
+    }
+    qDebug() << "appDataDir - " << appDataDir;
+    QString path(appDataDir);
+    path.append(QDir::separator()).append("data.db");
+    path = QDir::toNativeSeparators(path);
+
+    db = QSqlDatabase::addDatabase("QSQLITE", "refio");
+    db.setDatabaseName(path);
+    if (!db.open()) {
+        qDebug() << "Can't connect to DB!";
+    }else{
+        qDebug() << "DB opened successfully!";
+    }
+    //TODO: create tables if not exist
+
 }

@@ -1,4 +1,4 @@
-QT += widgets
+QT += sql widgets
 requires(qtConfig(listview))
 
 SOURCES   = adddialog.cpp \
