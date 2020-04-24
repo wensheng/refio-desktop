@@ -5,6 +5,7 @@
 
 #include "collections_widget.h"
 #include "mainwindow.h"
+#include "mtree_model.h"
 
 #include <QtWidgets>
 #include <QSqlDatabase>
@@ -17,11 +18,24 @@ CollectionsWidget::CollectionsWidget(QWidget *parent)
       standardItemModel(new QStandardItemModel(this))
 {
     setup_db();
+    QList<QVector<QVariant>> modelData;
     QSqlQuery query(db);
     query.prepare("SELECT id, title, parent, children FROM ref_collections");
     if(!query.exec()){
         qDebug() << query.lastError().text();
+    }else{
+        while (query.next()) {
+            QVector<QVariant> result;
+            result.push_back(query.value(0).toInt()); // id
+            result.push_back(query.value(1).toString()); // title
+            result.push_back(query.value(2).toInt()); // parent
+            result.push_back(query.value(3).toString()); // children
+            modelData.push_back(result);
+        }
     }
+
+    QVector<QVariant> headers = {0, "title", 0};
+    MTreeModel *mtreeModel = new MTreeModel(headers, modelData);
 
     auto tb = new QToolBar();
 
@@ -48,6 +62,7 @@ CollectionsWidget::CollectionsWidget(QWidget *parent)
 
 
     /* copied from example/widgets/tutorials/7_selections */
+    /*
     standardItemModel->setHeaderData(0, Qt::Horizontal, "My Library");
     QStandardItem *rootNode = standardItemModel->invisibleRootItem();
 
@@ -75,6 +90,11 @@ CollectionsWidget::CollectionsWidget(QWidget *parent)
     //register the model
     treeView->setModel(standardItemModel);
     treeView->expandAll();
+    */
+    treeView->setModel(mtreeModel);
+    treeView->setHeaderHidden(true);
+    treeView->expandAll();
+    treeView->resizeColumnToContents(0);
 
     //selection changes shall trigger a slot
     QItemSelectionModel *selectionModel = treeView->selectionModel();
