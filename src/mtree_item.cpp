@@ -97,7 +97,13 @@ bool MTreeItem::removeChildren(int position, int count)
 
     return true;
 }
-//! [10]
+
+void MTreeItem::removeAllChildren()
+{
+    for (int row = 0; row < childItems.size(); ++row){
+        delete childItems.takeAt(row);
+    }
+}
 
 //! [11]
 bool MTreeItem::setData(int column, const QVariant &value)

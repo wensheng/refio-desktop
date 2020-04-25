@@ -163,52 +163,49 @@ bool MTreeModel::setHeaderData(int section, Qt::Orientation orientation,
 
 void MTreeModel::setupModelData(const QList<QVector<QVariant>> &lines, MTreeItem *parent)
 {
+    /*
+     * data must satisfy:
+     *   1st column is title for display
+     *   2nd column is id (must not be 0), must be in ascending order
+     *   3rd column is parent id (must be 0 if no parent)
+     *   (of course a child can not have a higher id than parent)
+     * */
     if(lines.isEmpty()){
         return;
     }
 
-    QVector<MTreeItem*> parents;
     QHash<int, MTreeItem*> hash;
     hash[0] = parent;
-    QVector<int> indentations;
-    parents << parent;
-    indentations << 0;
 
-    int number = 0;
-    /*
-     * we can do this because item id's are always in ascending order
-     * child id's are always after parent's id.
-     * */
-
-    while (number < lines.size()) {
-        //qDebug() << number << ":" << lines.at(number);
-        /*
-        QStringList cidss = query.value(3).toString().split( "," );
-        QList<int> cids;
-        for(const auto& s: cidss){
-            if(!s.isEmpty()){
-                cids.push_back(s.toInt());
-            }
-        }
-        result.push_back(cids);
-        qDebug() << cids;
-        */
-        QVector<QVariant> line = lines.at(number);
-        int idx = line.at(0).toInt();
+    for(int i=0; i<lines.size(); i++) {
+        QVector<QVariant> line = lines.at(i);
+        int idx = line.at(1).toInt();
         int pid = line.at(2).toInt();
         if(pid==0){
             //root item
-            MTreeItem *item = new MTreeItem(idx, {line.at(1)}, parent);
+            MTreeItem *item = new MTreeItem(idx, line, parent);
             hash[idx] = item;
             parent->insertChild(item);
         }else{
             //child item
             if(hash.contains(pid)){
-                MTreeItem *item = new MTreeItem(idx, {line.at(1)}, hash[pid]);
+                MTreeItem *item = new MTreeItem(idx, line, hash[pid]);
                 hash[idx] = item;
                 hash[pid]->insertChild(item);
+            }else{
+                //item with parent id that cannot be found in hash
+                //  will be ignored
             }
         }
-        ++number;
     }
+}
+
+// clear model leave just rootItem
+void MTreeModel::clearModel()
+{
+    int rows = rootItem->childCount();
+    QModelIndex modelIndex;
+    beginRemoveRows(modelIndex, 0, rows - 1);
+    rootItem->removeAllChildren();
+    endRemoveRows();
 }

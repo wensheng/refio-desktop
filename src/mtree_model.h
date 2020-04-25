@@ -43,9 +43,10 @@ public:
     bool removeRows(int position, int rows,
                     const QModelIndex &parent = QModelIndex()) override;
     MTreeItem *getItem(const QModelIndex &index) const;
+    void clearModel();
+    void setupModelData(const QList<QVector<QVariant>> &data, MTreeItem *parent);
 
 private:
-    void setupModelData(const QList<QVector<QVariant>> &data, MTreeItem *parent);
 
     MTreeItem *rootItem;
 };

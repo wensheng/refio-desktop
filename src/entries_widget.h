@@ -10,6 +10,8 @@
 #include <QWidget>
 #include <QTreeView>
 #include "treemodel.h"
+#include "mtree_model.h"
+#include "mtree_item.h"
 #include "entry_details_widget.h"
 
 QT_BEGIN_NAMESPACE
@@ -25,12 +27,13 @@ public:
     EntriesWidget(QWidget *parent = nullptr);
     //AddressWidget *addressWidget;
     QTreeView *treeView;
+    void update(MTreeItem *mtreeItem);
 
 public slots:
     void updateActions();
 
 private:
-    TreeModel *treeModel;
+    MTreeModel *mtreeModel;
     EntryDetailsWidget *detailWidget;
 
 private slots:

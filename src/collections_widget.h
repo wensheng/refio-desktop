@@ -8,6 +8,7 @@
 
 #include <QWidget>
 #include <QSqlDatabase>
+#include "mtree_model.h"
 
 QT_BEGIN_NAMESPACE
 class QTreeView;
@@ -33,6 +34,7 @@ private slots:
 private:
     QTreeView *treeView;
     QStandardItemModel *standardItemModel;
+    MTreeModel *mtreeModel;
     void setup_db();
     QSqlDatabase db;
 };

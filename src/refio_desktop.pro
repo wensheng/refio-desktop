@@ -23,6 +23,7 @@ SOURCES   = adddialog.cpp \
 HEADERS   = adddialog.h \
             about_refio_dialog.h \
             collections_widget.h \
+            constants.h \
             reference_widget.h \
             entries_widget.h \
             entry_details_widget.h \

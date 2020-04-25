@@ -3,12 +3,17 @@
 **
 ****************************************************************************/
 
+#include "constants.h"
 #include "entries_widget.h"
 #include "entry_details_widget.h"
 #include "treeitem.h"
 #include "treemodel.h"
+#include "mtree_model.h"
 
 #include <QtWidgets>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
 
 EntriesWidget::EntriesWidget(QWidget *parent)
     : QWidget(parent),
@@ -35,16 +40,13 @@ EntriesWidget::EntriesWidget(QWidget *parent)
     tb->addAction(saveAct);
 
 
-    const QStringList headers({tr("Title"), tr("Description")});
+    QVector<QVariant> headers = {"Title", "id", "parent", "cid", "Info", "Note"};
+    QList<QVector<QVariant>> emptyData;
+    mtreeModel = new MTreeModel(headers, emptyData);
 
-    QFile file(":/default.txt");
-    file.open(QIODevice::ReadOnly);
-    TreeModel *model = new TreeModel(headers, file.readAll());
-    file.close();
-
-    treeView->setModel(model);
-    treeView->setHeaderHidden(true);
-    for (int column = 1; column < model->columnCount(); ++column)
+    treeView->setModel(mtreeModel);
+    //treeView->setHeaderHidden(true);
+    for (int column = 1; column < mtreeModel->columnCount(); ++column)
         treeView->setColumnHidden(column, true);
     treeView->resizeColumnToContents(0);
 
@@ -58,6 +60,48 @@ EntriesWidget::EntriesWidget(QWidget *parent)
     layout->addWidget(treeView);
     layout->setContentsMargins(0,0,0,0);
     setLayout(layout);
+    setObjectName(REF_ENTRIES_WIDGET_NAME);
+}
+
+void EntriesWidget::update(MTreeItem *mtreeItem){
+
+    QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
+    QList<QVector<QVariant>> modelData;
+    QSqlQuery query(db);
+    //query.prepare("SELECT title, id, cid, parent, info, note FROM ref_items where cid=:cid");
+    //query.prepare("SELECT * FROM ref_items");
+    query.prepare("select title, id, parent, 0, info, note from ref_items where ci=:cid");
+    query.bindValue(":cid", mtreeItem->cid());
+    qDebug() << "db isOpen:" << db.isOpen();
+
+    if(!query.exec()){
+        qDebug() << query.lastError().text();
+    }else{
+        while (query.next()) {
+            QVector<QVariant> result;
+            result.push_back(query.value(0).toString()); // title
+            result.push_back(query.value(1).toInt()); // id
+            result.push_back(query.value(2).toInt()); // cid
+            result.push_back(query.value(3).toInt()); // parent
+            result.push_back(query.value(4).toString()); // info
+            result.push_back(query.value(5).toString()); // note
+            modelData.push_back(result);
+            qDebug() << result;
+        }
+    }
+
+    auto oldModel = treeView->model();
+    QVector<QVariant> headers = {"Title", "id", "parent", "cid", "Info", "Note"};
+    MTreeModel *mtreeModel = new MTreeModel(headers, modelData);
+    treeView->setModel(mtreeModel);
+    delete oldModel;
+    for (int column = 1; column < mtreeModel->columnCount(); ++column)
+        treeView->setColumnHidden(column, true);
+    treeView->resizeColumnToContents(0);
+    connect(treeView->selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, &EntriesWidget::updateActions);
+
+    updateActions();
 }
 
 void EntriesWidget::newFile()
@@ -126,7 +170,7 @@ void EntriesWidget::removeRow()
 
 void EntriesWidget::updateActions()
 {
-    TreeModel *model = (TreeModel *) treeView->model();
+    MTreeModel *model = (MTreeModel *) treeView->model();
     const bool hasSelection = !treeView->selectionModel()->selection().isEmpty();
     //removeRowAction->setEnabled(hasSelection);
 
@@ -136,7 +180,7 @@ void EntriesWidget::updateActions()
     if (hasCurrent) {
         QModelIndex idx = treeView->selectionModel()->currentIndex();
         //QVector<QVariant> rowData = model->getRowData(idx);
-        TreeItem *treeItem = model->getItem(idx);
+        MTreeItem *treeItem = model->getItem(idx);
         //TODO combine
         QSplitter *pw = (QSplitter*)this->parentWidget();
         EntryDetailsWidget *detailsWidget = (EntryDetailsWidget*)(pw->widget(1));

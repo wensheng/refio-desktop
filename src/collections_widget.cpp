@@ -3,9 +3,11 @@
 **
 ****************************************************************************/
 
+#include "constants.h"
 #include "collections_widget.h"
 #include "mainwindow.h"
 #include "mtree_model.h"
+#include "entries_widget.h"
 
 #include <QtWidgets>
 #include <QSqlDatabase>
@@ -20,14 +22,14 @@ CollectionsWidget::CollectionsWidget(QWidget *parent)
     setup_db();
     QList<QVector<QVariant>> modelData;
     QSqlQuery query(db);
-    query.prepare("SELECT id, title, parent, children FROM ref_collections");
+    query.prepare("SELECT title, id, parent, children FROM ref_collections");
     if(!query.exec()){
         qDebug() << query.lastError().text();
     }else{
         while (query.next()) {
             QVector<QVariant> result;
-            result.push_back(query.value(0).toInt()); // id
-            result.push_back(query.value(1).toString()); // title
+            result.push_back(query.value(0).toString()); // title
+            result.push_back(query.value(1).toInt()); // id
             result.push_back(query.value(2).toInt()); // parent
             result.push_back(query.value(3).toString()); // children
             modelData.push_back(result);
@@ -35,7 +37,7 @@ CollectionsWidget::CollectionsWidget(QWidget *parent)
     }
 
     QVector<QVariant> headers = {0, "title", 0};
-    MTreeModel *mtreeModel = new MTreeModel(headers, modelData);
+    mtreeModel = new MTreeModel(headers, modelData);
 
     auto tb = new QToolBar();
 
@@ -60,41 +62,12 @@ CollectionsWidget::CollectionsWidget(QWidget *parent)
     connect(saveAct, &QAction::triggered, this, &CollectionsWidget::closeFile);
     tb->addAction(saveAct);
 
-
-    /* copied from example/widgets/tutorials/7_selections */
-    /*
-    standardItemModel->setHeaderData(0, Qt::Horizontal, "My Library");
-    QStandardItem *rootNode = standardItemModel->invisibleRootItem();
-
-    //defining a couple of items
-    QStandardItem *americaItem = new QStandardItem("America");
-    americaItem->setIcon(QIcon(":/images/open.png"));
-    QStandardItem *mexicoItem =  new QStandardItem("Canada");
-    QStandardItem *usaItem =     new QStandardItem("USA");
-    QStandardItem *bostonItem =  new QStandardItem("Boston");
-    QStandardItem *europeItem =  new QStandardItem("Europe");
-    QStandardItem *italyItem =   new QStandardItem("Italy");
-    QStandardItem *romeItem =    new QStandardItem("Rome");
-    QStandardItem *veronaItem =  new QStandardItem("Verona");
-
-    //building up the hierarchy
-    rootNode->    appendRow(americaItem);
-    rootNode->    appendRow(europeItem);
-    americaItem-> appendRow(mexicoItem);
-    americaItem-> appendRow(usaItem);
-    usaItem->     appendRow(bostonItem);
-    europeItem->  appendRow(italyItem);
-    italyItem->   appendRow(romeItem);
-    italyItem->   appendRow(veronaItem);
-
-    //register the model
-    treeView->setModel(standardItemModel);
-    treeView->expandAll();
-    */
     treeView->setModel(mtreeModel);
     treeView->setHeaderHidden(true);
     treeView->expandAll();
     treeView->resizeColumnToContents(0);
+    for (int column = 1; column < mtreeModel->columnCount(); ++column)
+        treeView->setColumnHidden(column, true);
 
     //selection changes shall trigger a slot
     QItemSelectionModel *selectionModel = treeView->selectionModel();
@@ -127,8 +100,14 @@ void CollectionsWidget::selectionChanged(const QItemSelection &newSelection, con
 {
     //get the text of the selected item
     const QModelIndex index = treeView->selectionModel()->currentIndex();
+    MTreeItem *item = mtreeModel->getItem(index);
+    QSplitter *pw = (QSplitter*)this->parentWidget();
+    EntriesWidget *entriesWidget = pw->findChild<EntriesWidget *>(REF_ENTRIES_WIDGET_NAME);
+    entriesWidget->update(item);
+
     QString selectedText = index.data(Qt::DisplayRole).toString();
     //find out the hierarchy level of the selected item
+    qDebug() << selectedText;
     int hierarchyLevel = 1;
     QModelIndex seekRoot = index;
     while (seekRoot.parent() != QModelIndex()) {
@@ -152,7 +131,7 @@ void CollectionsWidget::setup_db()
     path.append(QDir::separator()).append("data.db");
     path = QDir::toNativeSeparators(path);
 
-    db = QSqlDatabase::addDatabase("QSQLITE", "refio");
+    db = QSqlDatabase::addDatabase("QSQLITE", DATABASE_NAME);
     db.setDatabaseName(path);
     if (!db.open()) {
         qDebug() << "Can't connect to DB!";

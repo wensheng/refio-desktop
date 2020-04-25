@@ -29,11 +29,11 @@ void EntryDetailsWidget::setupTabs()
 
 }
 
-void EntryDetailsWidget::updateDetail(const TreeItem *data)
+void EntryDetailsWidget::updateDetail(const MTreeItem *data)
 {
-    QString title = data->data(0).toString();
-    QString note = data->data(1).toString();
-    entryInfoTab->updateLabel(title);
+    QString info = data->data(4).toString();
+    QString note = data->data(5).toString();
+    entryInfoTab->updateLabel(info);
     entryNoteTab->updateLabel(note);
     //
 

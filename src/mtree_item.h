@@ -22,9 +22,13 @@ public:
     QVariant data(int column) const;
     void insertChild(MTreeItem *const &);
     MTreeItem *parent();
+    int cid() const{
+        return iid;
+    }
     bool removeChildren(int position, int count);
     int childNumber() const;
     bool setData(int column, const QVariant &value);
+    void removeAllChildren();
 
 private:
     int iid;  //db id
