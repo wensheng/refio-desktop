@@ -100,8 +100,8 @@ void EntriesWidget::update(MTreeItem *mtreeItem){
     treeView->resizeColumnToContents(0);
     connect(treeView->selectionModel(), &QItemSelectionModel::selectionChanged,
             this, &EntriesWidget::updateActions);
-
-    updateActions();
+    QModelIndex idxFirst = treeView->model()->index(0,0);
+    treeView->selectionModel()->setCurrentIndex(idxFirst, QItemSelectionModel::SelectCurrent);
 }
 
 void EntriesWidget::newFile()
@@ -170,17 +170,19 @@ void EntriesWidget::removeRow()
 
 void EntriesWidget::updateActions()
 {
-    MTreeModel *model = (MTreeModel *) treeView->model();
+    //MTreeModel *model = (MTreeModel *) treeView->model();
     const bool hasSelection = !treeView->selectionModel()->selection().isEmpty();
+    qDebug() << "hasSelection:" << hasSelection;
     //removeRowAction->setEnabled(hasSelection);
 
     const bool hasCurrent = treeView->selectionModel()->currentIndex().isValid();
+    qDebug() << "hasCurrent:" << hasCurrent;
     //insertRowAction->setEnabled(hasCurrent);
 
     if (hasCurrent) {
         QModelIndex idx = treeView->selectionModel()->currentIndex();
         //QVector<QVariant> rowData = model->getRowData(idx);
-        MTreeItem *treeItem = model->getItem(idx);
+        MTreeItem *treeItem = mtreeModel->getItem(idx);
         //TODO combine
         QSplitter *pw = (QSplitter*)this->parentWidget();
         EntryDetailsWidget *detailsWidget = (EntryDetailsWidget*)(pw->widget(1));
