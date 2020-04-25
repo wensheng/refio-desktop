@@ -3,6 +3,7 @@
 **
 ****************************************************************************/
 
+#include "constants.h"
 #include "entry_note_tab.h"
 
 #include <QtWidgets>
@@ -23,6 +24,7 @@ EntryNoteTab::EntryNoteTab(QWidget *parent)
     mainLayout->addWidget(addButton, 0, Qt::AlignCenter);
 
     setLayout(mainLayout);
+    setObjectName(REF_ENTRY_DETAILS_NOTE_TAB_NAME);
 }
 
 void EntryNoteTab::addEntry()

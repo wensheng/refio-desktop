@@ -3,6 +3,7 @@
 **
 ****************************************************************************/
 
+#include "constants.h"
 #include "entry_details_widget.h"
 #include "adddialog.h"
 
@@ -21,6 +22,7 @@ EntryDetailsWidget::EntryDetailsWidget(QWidget *parent)
     addTab(entryInfoTab, tr("Info"));
 
     setupTabs();
+    setObjectName(REF_ENTRY_DETAILS_WIDGET_NAME);
 }
 
 void EntryDetailsWidget::setupTabs()

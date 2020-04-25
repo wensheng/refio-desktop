@@ -3,6 +3,7 @@
 **
 ****************************************************************************/
 
+#include "constants.h"
 #include "entry_info_tab.h"
 
 #include <QtWidgets>
@@ -23,6 +24,7 @@ EntryInfoTab::EntryInfoTab(QWidget *parent)
     mainLayout->addWidget(addButton, 0, Qt::AlignCenter);
 
     setLayout(mainLayout);
+    setObjectName(REF_ENTRY_DETAILS_INFO_TAB_NAME);
 }
 
 void EntryInfoTab::addEntry()

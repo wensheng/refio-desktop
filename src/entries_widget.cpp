@@ -71,7 +71,7 @@ void EntriesWidget::update(MTreeItem *mtreeItem){
     //query.prepare("SELECT title, id, cid, parent, info, note FROM ref_items where cid=:cid");
     //query.prepare("SELECT * FROM ref_items");
     query.prepare("select title, id, parent, 0, info, note from ref_items where ci=:cid");
-    query.bindValue(":cid", mtreeItem->cid());
+    query.bindValue(":cid", mtreeItem->itemId());
     qDebug() << "db isOpen:" << db.isOpen();
 
     if(!query.exec()){
@@ -98,8 +98,9 @@ void EntriesWidget::update(MTreeItem *mtreeItem){
     for (int column = 1; column < mtreeModel->columnCount(); ++column)
         treeView->setColumnHidden(column, true);
     treeView->resizeColumnToContents(0);
-    connect(treeView->selectionModel(), &QItemSelectionModel::selectionChanged,
-            this, &EntriesWidget::updateActions);
+    connect(treeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &EntriesWidget::updateActions);
+    connect(treeView->model(), &QAbstractItemModel::dataChanged, this, &EntriesWidget::handleEdit);
+
     QModelIndex idxFirst = treeView->model()->index(0,0);
     treeView->selectionModel()->setCurrentIndex(idxFirst, QItemSelectionModel::SelectCurrent);
 }
@@ -200,4 +201,21 @@ void EntriesWidget::updateActions()
             //statusBar()->showMessage(tr("Position: (%1,%2) in top level").arg(row).arg(column));
         }
     }
+}
+
+void EntriesWidget::handleEdit()
+{
+        QModelIndex idx = treeView->selectionModel()->currentIndex();
+        MTreeItem *item = mtreeModel->getItem(idx);
+        QString newTitle = treeView->model()->data(idx).toString();
+
+        QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
+        //QList<QVector<QVariant>> modelData;
+        QSqlQuery query(db);
+        query.prepare("update ref_items set title=:newTitle where id=:iid");
+        query.bindValue(":iid", item->itemId());
+        query.bindValue(":newTitle", newTitle);
+        if(!query.exec()){
+            qDebug() << query.lastError().text();
+        }
 }

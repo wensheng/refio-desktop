@@ -31,6 +31,7 @@ public:
 
 public slots:
     void updateActions();
+    void handleEdit();
 
 private:
     MTreeModel *mtreeModel;
