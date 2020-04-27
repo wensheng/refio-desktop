@@ -12,11 +12,11 @@ MTreeModel::MTreeModel(const QVector<QVariant> &headers,
                        QObject *parent)
     : QAbstractItemModel(parent)
 {
-    QVector<QVariant> rootData;
-    for (const auto &header : headers)
-        rootData << header;
-
-    rootItem = new MTreeItem(0, rootData);
+    //QVector<QVariant> rootData;
+    //for (const auto &header : headers)
+    //    rootData << header;
+    //rootItem = new MTreeItem(0, rootData);
+    rootItem = new MTreeItem(0, headers);
     setupModelData(data, rootItem);
 }
 
@@ -112,6 +112,42 @@ QModelIndex MTreeModel::parent(const QModelIndex &index) const
 
     return createIndex(parentItem->childNumber(), 0, parentItem);
 }
+bool MTreeModel::insertRows(int position, int rows, const QModelIndex &parent)
+{
+    MTreeItem *parentItem = getItem(parent);
+    if (!parentItem)
+        return false;
+
+    beginInsertRows(parent, position, position + rows - 1);
+    const bool success = parentItem->insertChildren(position, rows);
+    endInsertRows();
+
+    return success;
+}
+/*
+bool MTreeModel::insertRow(int row, const QModelIndex &parent)
+{
+    MTreeItem *parentItem = getItem(parent);
+    if (!parentItem)
+        return false;
+
+    qDebug() << parentItem;
+    qDebug() << parentItem->itemId();
+    qDebug() << "columnCount()=" << parentItem->columnCount();
+    //qDebug() << parentItem->childCount();
+    qDebug() << parentItem->data(0).toString();
+
+    //beginInsertRows(parent, row, row);
+    QVector<QVariant> data(parentItem->columnCount());
+    data[0] = "new title";
+    // TODO: we don't know id before insert into database, so -1
+    MTreeItem *item = new MTreeItem(-1, data, parentItem);
+    parentItem->insertChild(item);
+    //endInsertRows();
+
+    return true;
+}
+*/
 
 bool MTreeModel::removeRows(int position, int rows, const QModelIndex &parent)
 {

@@ -44,7 +44,7 @@ ReferenceWidget::ReferenceWidget(QWidget *parent)
     innerSplitter = new QSplitter(Qt::Horizontal, rightWidget);
     innerSplitter->addWidget(entriesWidget);
     innerSplitter->addWidget(entryDetailsWidget);
-    innerSplitter->setHandleWidth(1);
+    innerSplitter->setHandleWidth(2);
     hBoxLayout->addWidget(innerSplitter);
     hBoxLayout->setContentsMargins(0,0,0,0);
     rightWidget->setLayout(hBoxLayout);

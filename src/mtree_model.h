@@ -39,7 +39,11 @@ public:
                  int role = Qt::EditRole) override;
     bool setHeaderData(int section, Qt::Orientation orientation,
                        const QVariant &value, int role = Qt::EditRole) override;
-
+    // in QAbstractItemModel, insertRow calls insertRows
+    // but if I use QAbstractItemModel's insertRow, it crash without get into insertRows
+    // so I override insertRow here
+    bool insertRows(int position, int rows, const QModelIndex &parent = QModelIndex()) override;
+    //bool insertRow(int row, const QModelIndex &parent = QModelIndex());
     bool removeRows(int position, int rows,
                     const QModelIndex &parent = QModelIndex()) override;
     MTreeItem *getItem(const QModelIndex &index) const;

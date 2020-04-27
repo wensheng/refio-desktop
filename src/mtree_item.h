@@ -25,6 +25,10 @@ public:
     int itemId() const{
         return iid;
     }
+    void setItemId(int itemId){
+        iid = itemId;
+    }
+    bool insertChildren(int position, int count);
     bool removeChildren(int position, int count);
     int childNumber() const;
     bool setData(int column, const QVariant &value);

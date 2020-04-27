@@ -8,8 +8,9 @@
 
 #include "addresswidget.h"
 #include <QWidget>
-#include <QTreeView>
+//#include <QTreeView>
 #include "treemodel.h"
+#include "mtreeview.h"
 #include "mtree_model.h"
 #include "mtree_item.h"
 #include "entry_details_widget.h"
@@ -26,23 +27,23 @@ class EntriesWidget : public QWidget
 public:
     EntriesWidget(QWidget *parent = nullptr);
     //AddressWidget *addressWidget;
-    QTreeView *treeView;
+    MTreeView *treeView;
     void update(MTreeItem *mtreeItem);
 
 public slots:
     void updateActions();
     void handleEdit();
+    void insertRow();
 
 private:
-    MTreeModel *mtreeModel;
     EntryDetailsWidget *detailWidget;
+    int collection_id;
 
 private slots:
     void newFile();
     void openFile();
     void closeFile();
     void insertChild();
-    void insertRow();
     void removeRow();
 };
 

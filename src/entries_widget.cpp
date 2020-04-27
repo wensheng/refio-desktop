@@ -17,8 +17,9 @@
 
 EntriesWidget::EntriesWidget(QWidget *parent)
     : QWidget(parent),
-      treeView(new QTreeView(this))
+      treeView(new MTreeView(this))
 {
+    collection_id = 0;
     auto tb = new QToolBar();
 
     const QIcon newIcon = QIcon::fromTheme("document-new", QIcon(":/images/new.png"));
@@ -39,9 +40,9 @@ EntriesWidget::EntriesWidget(QWidget *parent)
     connect(saveAct, &QAction::triggered, this, &EntriesWidget::removeRow);
     tb->addAction(saveAct);
 
-
+    /*
     QVector<QVariant> headers = {"Title", "id", "parent", "cid", "Info", "Note"};
-    QList<QVector<QVariant>> emptyData;
+    QList<QVector<QVariant>> emptyData =  QList<QVector<QVariant>>();
     mtreeModel = new MTreeModel(headers, emptyData);
 
     treeView->setModel(mtreeModel);
@@ -54,6 +55,7 @@ EntriesWidget::EntriesWidget(QWidget *parent)
             this, &EntriesWidget::updateActions);
 
     updateActions();
+    */
 
     auto layout = new QVBoxLayout();
     layout->setMenuBar(tb);
@@ -64,14 +66,14 @@ EntriesWidget::EntriesWidget(QWidget *parent)
 }
 
 void EntriesWidget::update(MTreeItem *mtreeItem){
-
+    collection_id = mtreeItem->itemId();
     QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
     QList<QVector<QVariant>> modelData;
     QSqlQuery query(db);
     //query.prepare("SELECT title, id, cid, parent, info, note FROM ref_items where cid=:cid");
     //query.prepare("SELECT * FROM ref_items");
     query.prepare("select title, id, parent, 0, info, note from ref_items where ci=:cid");
-    query.bindValue(":cid", mtreeItem->itemId());
+    query.bindValue(":cid", collection_id);
     qDebug() << "db isOpen:" << db.isOpen();
 
     if(!query.exec()){
@@ -148,9 +150,10 @@ void EntriesWidget::insertChild()
 void EntriesWidget::insertRow()
 {
     const QModelIndex index = treeView->selectionModel()->currentIndex();
-    QAbstractItemModel *model = treeView->model();
+    MTreeModel *model = (MTreeModel *)treeView->model();
+    qDebug() << "index.row()=" << index.row() << " index.parent()=" << index.parent();
 
-    if (!model->insertRow(index.row()+1, index.parent()))
+    if (!model->insertRow(index.row() + 1, index.parent()))
         return;
 
     updateActions();
@@ -182,8 +185,9 @@ void EntriesWidget::updateActions()
 
     if (hasCurrent) {
         QModelIndex idx = treeView->selectionModel()->currentIndex();
+        MTreeModel *model = (MTreeModel *)treeView->model();
         //QVector<QVariant> rowData = model->getRowData(idx);
-        MTreeItem *treeItem = mtreeModel->getItem(idx);
+        MTreeItem *treeItem = model->getItem(idx);
         //TODO combine
         QSplitter *pw = (QSplitter*)this->parentWidget();
         EntryDetailsWidget *detailsWidget = (EntryDetailsWidget*)(pw->widget(1));
@@ -206,16 +210,31 @@ void EntriesWidget::updateActions()
 void EntriesWidget::handleEdit()
 {
         QModelIndex idx = treeView->selectionModel()->currentIndex();
-        MTreeItem *item = mtreeModel->getItem(idx);
+        MTreeModel *model = (MTreeModel *)treeView->model();
+        MTreeItem *item = model->getItem(idx);
         QString newTitle = treeView->model()->data(idx).toString();
-
         QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
         //QList<QVector<QVariant>> modelData;
         QSqlQuery query(db);
-        query.prepare("update ref_items set title=:newTitle where id=:iid");
-        query.bindValue(":iid", item->itemId());
-        query.bindValue(":newTitle", newTitle);
-        if(!query.exec()){
-            qDebug() << query.lastError().text();
+
+        if(item->itemId() == -1){
+            query.prepare("insert into ref_items (ci, parent, title, info, note) values (:ci, :parent, :title, \"\", \"\")");
+            query.bindValue(":ci", collection_id);
+            // TODO: actually set parent
+            query.bindValue(":parent", 0);
+            query.bindValue(":title", newTitle);
+            if(!query.exec()){
+                qDebug() << query.lastError().text();
+            }else{
+                qDebug() << "lastInsertId()=" << query.lastInsertId();
+                item->setItemId(query.lastInsertId().toInt());
+            }
+        }else{
+            query.prepare("update ref_items set title=:newTitle where id=:iid");
+            query.bindValue(":iid", item->itemId());
+            query.bindValue(":newTitle", newTitle);
+            if(!query.exec()){
+                qDebug() << query.lastError().text();
+            }
         }
 }

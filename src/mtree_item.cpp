@@ -15,7 +15,9 @@ MTreeItem::MTreeItem(int idx, const QVector<QVariant> &data, MTreeItem *parent)
     : iid(idx),
       itemData(data),
       parentItem(parent)
-{}
+{
+    childItems = QVector<MTreeItem*>();
+}
 
 MTreeItem::~MTreeItem()
 {
@@ -32,7 +34,7 @@ MTreeItem *MTreeItem::child(int number)
 //! [3]
 int MTreeItem::childCount() const
 {
-    return childItems.count();
+    return childItems.size();
 }
 //! [3]
 
@@ -48,7 +50,7 @@ int MTreeItem::childNumber() const
 //! [5]
 int MTreeItem::columnCount() const
 {
-    return itemData.count();
+    return itemData.size();
 }
 //! [5]
 
@@ -61,20 +63,20 @@ QVariant MTreeItem::data(int column) const
 }
 //! [6]
 
-/*
-bool MTreeItem::insertChildren(int position, int count, int columns)
+bool MTreeItem::insertChildren(int position, int count)
 {
     if (position < 0 || position > childItems.size())
         return false;
 
     for (int row = 0; row < count; ++row) {
-        QVector<QVariant> data(columns);
-        MTreeItem *item = new MTreeItem(data, this);
+        QVector<QVariant> data(columnCount());
+        // TODO: we don't know id before insert into database, so -1
+        MTreeItem *item = new MTreeItem(-1, data, this);
         childItems.insert(position, item);
     }
 
     return true;
-}*/
+}
 
 void MTreeItem::insertChild(MTreeItem *const &child)
 {

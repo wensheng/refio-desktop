@@ -17,6 +17,7 @@ SOURCES   = adddialog.cpp \
             settings_dialog.cpp \
             treemodel.cpp \
             treeitem.cpp \
+            mtreeview.cpp \
             mtree_item.cpp \
             mtree_model.cpp \
             tablemodel.cpp
@@ -36,6 +37,7 @@ HEADERS   = adddialog.h \
             settings_dialog.h \
             treemodel.h \
             treeitem.h \
+            mtreeview.h \
             mtree_item.h \
             mtree_model.h \
             tablemodel.h
