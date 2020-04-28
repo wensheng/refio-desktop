@@ -22,7 +22,7 @@ CollectionsWidget::CollectionsWidget(QWidget *parent)
     setup_db();
     QList<QVector<QVariant>> modelData;
     QSqlQuery query(db);
-    query.prepare("SELECT title, id, parent, children FROM ref_collections");
+    query.prepare("SELECT title, id, parent FROM ref_collections");
     if(!query.exec()){
         qDebug() << query.lastError().text();
     }else{
@@ -31,7 +31,6 @@ CollectionsWidget::CollectionsWidget(QWidget *parent)
             result.push_back(query.value(0).toString()); // title
             result.push_back(query.value(1).toInt()); // id
             result.push_back(query.value(2).toInt()); // parent
-            result.push_back(query.value(3).toString()); // children
             modelData.push_back(result);
         }
     }
@@ -44,21 +43,18 @@ CollectionsWidget::CollectionsWidget(QWidget *parent)
     const QIcon newIcon = QIcon::fromTheme("document-new", QIcon(":/images/new.png"));
     QAction *newAct = new QAction(newIcon, tr("&New"), this);
     newAct->setShortcuts(QKeySequence::New);
-    newAct->setStatusTip(tr("Create a new file"));
-    connect(newAct, &QAction::triggered, this, &CollectionsWidget::newFile);
+    connect(newAct, &QAction::triggered, this, &CollectionsWidget::insertRow);
     tb->addAction(newAct);
 
     const QIcon openIcon = QIcon::fromTheme("document-open", QIcon(":/images/open.png"));
     QAction *openAct = new QAction(openIcon, tr("&Open..."), this);
     openAct->setShortcuts(QKeySequence::Open);
-    openAct->setStatusTip(tr("Open an existing file"));
     connect(openAct, &QAction::triggered, this, &CollectionsWidget::openFile);
     tb->addAction(openAct);
 
     const QIcon saveIcon = QIcon::fromTheme("document-save", QIcon(":/images/save.png"));
     QAction *saveAct = new QAction(saveIcon, tr("&Save"), this);
     saveAct->setShortcuts(QKeySequence::Save);
-    saveAct->setStatusTip(tr("Save the document to disk"));
     connect(saveAct, &QAction::triggered, this, &CollectionsWidget::closeFile);
     tb->addAction(saveAct);
 
@@ -73,6 +69,7 @@ CollectionsWidget::CollectionsWidget(QWidget *parent)
     QItemSelectionModel *selectionModel = treeView->selectionModel();
     connect(selectionModel, &QItemSelectionModel::selectionChanged,
                 this, &CollectionsWidget::selectionChanged);
+    connect(treeView->model(), &QAbstractItemModel::dataChanged, this, &CollectionsWidget::handleEdit);
 
     auto layout = new QVBoxLayout();
     layout->setMenuBar(tb);
@@ -140,4 +137,51 @@ void CollectionsWidget::setup_db()
     }
     //TODO: create tables if not exist
 
+}
+
+void CollectionsWidget::handleEdit()
+{
+        QModelIndex idx = treeView->selectionModel()->currentIndex();
+        MTreeModel *model = (MTreeModel *)treeView->model();
+        MTreeItem *item = model->getItem(idx);
+        QString newTitle = treeView->model()->data(idx).toString();
+        QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
+        //QList<QVector<QVariant>> modelData;
+        QSqlQuery query(db);
+
+        if(item->itemId() == -1){
+            query.prepare("insert into ref_collections (parent, title) values (:parent, :title)");
+            query.bindValue(":parent", 0);
+            query.bindValue(":title", newTitle);
+            if(!query.exec()){
+                qDebug() << query.lastError().text();
+            }else{
+                qDebug() << "lastInsertId()=" << query.lastInsertId();
+                item->setItemId(query.lastInsertId().toInt());
+            }
+        }else{
+            query.prepare("update ref_collections set title=:newTitle where id=:iid");
+            query.bindValue(":iid", item->itemId());
+            query.bindValue(":newTitle", newTitle);
+            if(!query.exec()){
+                qDebug() << query.lastError().text();
+            }
+        }
+}
+
+void CollectionsWidget::insertRow()
+{
+    const QModelIndex index = treeView->selectionModel()->currentIndex();
+    MTreeModel *model = (MTreeModel *)treeView->model();
+    qDebug() << "index.row()=" << index.row() << " index.parent()=" << index.parent();
+
+    if (!model->insertRow(index.row() + 1, index.parent()))
+        return;
+
+    //updateActions();
+
+    for (int column = 0; column < model->columnCount(index.parent()); ++column) {
+        const QModelIndex child = model->index(index.row() + 1, column, index.parent());
+        model->setData(child, QVariant(tr("[No data]")), Qt::EditRole);
+    }
 }

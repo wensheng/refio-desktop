@@ -9,7 +9,7 @@
 
 SlipboxWidget::SlipboxWidget(QWidget *parent)
     : QWidget(parent),
-      addressWidget(new AddressWidget)
+      addressWidget(new AddressWidget(this))
 {
     auto tb = new QToolBar();
 

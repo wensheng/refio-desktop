@@ -18,8 +18,8 @@
 
 MainWindow::MainWindow()
     : QMainWindow(),
-      referenceWidget(new ReferenceWidget),
-      slipboxWidget(new SlipboxWidget)
+      referenceWidget(new ReferenceWidget(this)),
+      slipboxWidget(new SlipboxWidget(this))
 {
     // referenceWidget is instantiated first, database connection is set up there
     isSlipbox = false;
@@ -290,6 +290,8 @@ void MainWindow::toggleCollectorView()
         collectorViewAct->setFont(menuItemBoldFont);
         slipboxViewAct->setFont(menuItemRegularFont);
         isSlipbox = false;
+        slipboxWidget->hide();
+        referenceWidget->show();
     }
 }
 
@@ -299,6 +301,8 @@ void MainWindow::toggleSlipboxView()
         collectorViewAct->setFont(menuItemRegularFont);
         slipboxViewAct->setFont(menuItemBoldFont);
         isSlipbox = true;
+        slipboxWidget->show();
+        referenceWidget->hide();
     }
 
 }

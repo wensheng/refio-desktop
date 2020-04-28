@@ -25,6 +25,10 @@ class CollectionsWidget : public QWidget
 public:
     CollectionsWidget(QWidget *parent = nullptr);
 
+public slots:
+    void handleEdit();
+    void insertRow();
+
 private slots:
     void selectionChanged(const QItemSelection &newSelection, const QItemSelection &oldSelection);
     void newFile();

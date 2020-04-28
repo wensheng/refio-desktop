@@ -70,9 +70,8 @@ void EntriesWidget::update(MTreeItem *mtreeItem){
     QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
     QList<QVector<QVariant>> modelData;
     QSqlQuery query(db);
-    //query.prepare("SELECT title, id, cid, parent, info, note FROM ref_items where cid=:cid");
-    //query.prepare("SELECT * FROM ref_items");
-    query.prepare("select title, id, parent, 0, info, note from ref_items where ci=:cid");
+    //query.prepare("SELECT title, id, cid, parent, info, note FROM ref_entries where collection_id=:cid");
+    query.prepare("select title, id, parent, 0, info, note from ref_entries where collection_id=:cid");
     query.bindValue(":cid", collection_id);
     qDebug() << "db isOpen:" << db.isOpen();
 
@@ -218,7 +217,7 @@ void EntriesWidget::handleEdit()
         QSqlQuery query(db);
 
         if(item->itemId() == -1){
-            query.prepare("insert into ref_items (ci, parent, title, info, note) values (:ci, :parent, :title, \"\", \"\")");
+            query.prepare("insert into ref_entries (ci, parent, title, info, note) values (:ci, :parent, :title, \"\", \"\")");
             query.bindValue(":ci", collection_id);
             // TODO: actually set parent
             query.bindValue(":parent", 0);
@@ -230,7 +229,7 @@ void EntriesWidget::handleEdit()
                 item->setItemId(query.lastInsertId().toInt());
             }
         }else{
-            query.prepare("update ref_items set title=:newTitle where id=:iid");
+            query.prepare("update ref_entries set title=:newTitle where id=:iid");
             query.bindValue(":iid", item->itemId());
             query.bindValue(":newTitle", newTitle);
             if(!query.exec()){
