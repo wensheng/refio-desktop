@@ -7,13 +7,14 @@
 
 #include <QtWidgets>
 
-ReferenceWidget::ReferenceWidget(QWidget *parent)
-    : QWidget(parent),
-      collectionsWidget(new CollectionsWidget),
-      rightWidget(new QWidget),
-      entriesWidget(new EntriesWidget),
-      entryDetailsWidget(new EntryDetailsWidget)
+ReferenceWidget::ReferenceWidget(int lib_id, QWidget *parent)
+    : QWidget(parent)
 {
+    collectionsWidget = new CollectionsWidget(lib_id),
+    rightWidget = new QWidget,
+    entriesWidget = new EntriesWidget,
+    entryDetailsWidget = new EntryDetailsWidget;
+
     /*
     auto tb = new QToolBar();
 

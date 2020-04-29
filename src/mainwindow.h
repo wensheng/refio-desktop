@@ -64,6 +64,8 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow();
+    ~MainWindow();
+    QString getNextICode();
 
 private slots:
     void updateActions(const QItemSelection &selection);
@@ -92,6 +94,8 @@ private slots:
     void toggleStackedView();
 private:
     void createMenus();
+    void setup_db();
+    QByteArray genICodeSeq();
 
     ReferenceWidget *referenceWidget;
     SlipboxWidget *slipboxWidget;
@@ -104,6 +108,8 @@ private:
     QAction *removeAct;
     bool isSlipbox;
     bool isStacked;
+    int lib_id;
+    QByteArray iCodeSeq;
 };
 //! [0]
 

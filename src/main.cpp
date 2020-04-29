@@ -55,6 +55,7 @@
 //! [0]
 int main(int argc, char *argv[])
 {
+    qSetMessagePattern("%{file}(%{line}): %{message}");
     QApplication app(argc, argv);
     MainWindow mw;
     mw.show();

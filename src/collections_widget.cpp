@@ -14,21 +14,23 @@
 #include <QSqlQuery>
 #include <QSqlError>
 
-CollectionsWidget::CollectionsWidget(QWidget *parent)
+CollectionsWidget::CollectionsWidget(int lib_id, QWidget *parent)
     : QWidget(parent),
       treeView(new QTreeView(this)),
-      standardItemModel(new QStandardItemModel(this))
+      standardItemModel(new QStandardItemModel(this)),
+      lib_id(lib_id)
 {
-    setup_db();
+    QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
     QList<QVector<QVariant>> modelData;
     QSqlQuery query(db);
-    query.prepare("SELECT title, id, parent FROM ref_collections");
+    query.prepare("SELECT name, id, parent FROM ref_collections where lib_id=:lib_id");
+    query.bindValue(":lib_id", lib_id);
     if(!query.exec()){
         qDebug() << query.lastError().text();
     }else{
         while (query.next()) {
             QVector<QVariant> result;
-            result.push_back(query.value(0).toString()); // title
+            result.push_back(query.value(0).toString()); // name
             result.push_back(query.value(1).toInt()); // id
             result.push_back(query.value(2).toInt()); // parent
             modelData.push_back(result);
@@ -116,43 +118,28 @@ void CollectionsWidget::selectionChanged(const QItemSelection &newSelection, con
     setWindowTitle(showString);
 }
 
-void CollectionsWidget::setup_db()
-{
-    QString appDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    QDir dir(appDataDir);
-    if(!dir.exists()){
-        dir.mkpath(".");
-    }
-    qDebug() << "appDataDir - " << appDataDir;
-    QString path(appDataDir);
-    path.append(QDir::separator()).append("data.db");
-    path = QDir::toNativeSeparators(path);
-
-    db = QSqlDatabase::addDatabase("QSQLITE", DATABASE_NAME);
-    db.setDatabaseName(path);
-    if (!db.open()) {
-        qDebug() << "Can't connect to DB!";
-    }else{
-        qDebug() << "DB opened successfully!";
-    }
-    //TODO: create tables if not exist
-
-}
-
 void CollectionsWidget::handleEdit()
 {
         QModelIndex idx = treeView->selectionModel()->currentIndex();
+        if(!idx.isValid()){
+            qDebug() << "current collection idx:" << idx;
+            return;
+        }
         MTreeModel *model = (MTreeModel *)treeView->model();
         MTreeItem *item = model->getItem(idx);
         QString newTitle = treeView->model()->data(idx).toString();
         QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
         //QList<QVector<QVariant>> modelData;
         QSqlQuery query(db);
+        int parent_id = item->parent()->itemId();
+        qDebug() << "parent_id=" << parent_id;
 
         if(item->itemId() == -1){
-            query.prepare("insert into ref_collections (parent, title) values (:parent, :title)");
-            query.bindValue(":parent", 0);
+            query.prepare("insert into ref_collections (lib_id, parent, name, created) values (:lib_id, :parent, :title, :created)");
+            query.bindValue(":lib_id", lib_id);
+            query.bindValue(":parent", parent_id);
             query.bindValue(":title", newTitle);
+            query.bindValue(":created", QDateTime::currentDateTime().toString(Qt::ISODate));
             if(!query.exec()){
                 qDebug() << query.lastError().text();
             }else{
@@ -171,17 +158,23 @@ void CollectionsWidget::handleEdit()
 
 void CollectionsWidget::insertRow()
 {
-    const QModelIndex index = treeView->selectionModel()->currentIndex();
     MTreeModel *model = (MTreeModel *)treeView->model();
-    qDebug() << "index.row()=" << index.row() << " index.parent()=" << index.parent();
+    QItemSelectionModel *selection = treeView->selectionModel();
+    const QModelIndex index = selection->currentIndex();
 
-    if (!model->insertRow(index.row() + 1, index.parent()))
+    //qDebug() << "index.row()=" << index.row() << " index.parent()=" << index.parent();
+    // if no selection index.row() will be -1
+    // below is still valid
+    if (!model->insertRow(index.row() + 1, index.parent())){
         return;
+    }
 
     //updateActions();
 
     for (int column = 0; column < model->columnCount(index.parent()); ++column) {
         const QModelIndex child = model->index(index.row() + 1, column, index.parent());
         model->setData(child, QVariant(tr("[No data]")), Qt::EditRole);
+        selection->select(child, QItemSelectionModel::Select);
     }
+
 }

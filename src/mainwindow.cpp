@@ -3,6 +3,7 @@
 **
 ****************************************************************************/
 
+#include "constants.h"
 #include "mainwindow.h"
 
 #include <QAction>
@@ -12,16 +13,24 @@
 #include <QScreen>
 #include <QDebug>
 #include <QGuiApplication>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QDateTime>
+#include <vector>
+#include <numeric>
+#include <algorithm>
+#include <random>
+#include <chrono>
 
 #include "about_refio_dialog.h"
 #include "settings_dialog.h"
 
-MainWindow::MainWindow()
-    : QMainWindow(),
-      referenceWidget(new ReferenceWidget(this)),
-      slipboxWidget(new SlipboxWidget(this))
+MainWindow::MainWindow() : QMainWindow()
 {
-    // referenceWidget is instantiated first, database connection is set up there
+    lib_id = 1;
+    setup_db(); // lib_id and iCodeSeq should be reset here
+    referenceWidget = new ReferenceWidget(lib_id, this);
+    slipboxWidget = new SlipboxWidget(this);
     isSlipbox = false;
     isStacked = false;
     slipboxWidget->hide();
@@ -33,6 +42,14 @@ MainWindow::MainWindow()
     QRect mainScreenSize = mainScreen->availableGeometry();
     resize(mainScreenSize.width() * 0.7f, mainScreenSize.height() * 0.7f);
     setWindowTitle("Refio");
+    setObjectName(MAIN_WINDOW_NAME);
+}
+
+MainWindow::~MainWindow()
+{
+    QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
+    db.close();
+    QSqlDatabase::removeDatabase( QSqlDatabase::defaultConnection );
 }
 
 void MainWindow::createMenus()
@@ -267,8 +284,41 @@ void MainWindow::findItem()
 void MainWindow::advancedSearch()
 {}
 
+QString MainWindow::getNextICode()
+{
+    QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
+    QSqlQuery query(db);
+    bool success = query.exec("SELECT MAX(id) from ref_entries");
+    if(!success){
+        qDebug() << query.lastError();
+        return QString("");
+    }
+    int last_entry_id = 0;
+    if(query.first()){
+        // TODO: is this OK? re-use code if over limit?
+        last_entry_id = query.value(0).toInt() % 32768;
+    }else{
+        qDebug() << "no record in ref_entries table";
+    }
+    qDebug() << "last_entry_id=" << last_entry_id;
+    qDebug() << "iCodeSeq size=" << iCodeSeq.count();
+    //qDebug() << "hex=" << iCodeSeq.toHex();
+    QByteArray part = iCodeSeq.mid(last_entry_id * 2, 2);
+    qDebug() << "part=" << part.toHex();
+    unsigned char idx_1 = (unsigned char)iCodeSeq.at(last_entry_id * 2);
+    unsigned char idx_2 = (unsigned char)iCodeSeq.at(last_entry_id * 2 + 1);
+    unsigned int idx_iCodeChar = idx_1 * 256 + idx_2;
+    qDebug() << "idx_1, idx_2, idx_iCodeChar=" << idx_1 << idx_2 << idx_iCodeChar;
+    QString iCode = QString(QChar::fromLatin1(iCodeChar[idx_iCodeChar >> 10]));
+    iCode.append(QChar::fromLatin1(iCodeChar[(idx_iCodeChar >> 5) & 0b11111]));
+    iCode.append(QChar::fromLatin1(iCodeChar[idx_iCodeChar & 0b11111]));
+    return iCode;
+}
+
 void MainWindow::addWebpage()
-{}
+{
+
+}
 
 void MainWindow::openDocumentationWebpage()
 {
@@ -354,3 +404,149 @@ void MainWindow::updateActions(const QItemSelection &selection)
     }
 }
 
+void MainWindow::setup_db()
+{
+    QSqlDatabase db;
+    QString appDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir dir(appDataDir);
+    if(!dir.exists()){
+        dir.mkpath(".");
+    }
+    qDebug() << "appDataDir - " << appDataDir;
+    QString path(appDataDir);
+    path.append(QDir::separator()).append("data.db");
+    bool createTables = false;
+    QFile dbFile;
+    dbFile.setFileName(path);
+    if(!dbFile.exists()){
+        createTables = true;
+    }
+
+    db = QSqlDatabase::addDatabase("QSQLITE", DATABASE_NAME);
+    db.setDatabaseName(path);
+
+    if (!db.open()) {
+        qDebug() << "Can't connect to DB!";
+    }else{
+        QSqlQuery query(db);
+        if(createTables){
+            bool success;
+            success = query.exec("CREATE TABLE ref_libraries("
+                       "  id integer not null primary key,"
+                       "  name text not null default \"My Library\","
+                       "  icodeseq blob not null,"
+                       "  created text);");
+            if(!success){
+                qDebug() << query.lastError().text();
+                return;
+            }
+            success = query.exec("CREATE TABLE ref_collections("
+                       "  id integer not null primary key,"
+                       "  lib_id integer not null default 0,"
+                       "  parent integer not null default 0,"
+                       "  name text not null,"
+                       "  created text);");
+            if(!success){
+                qDebug() << query.lastError().text();
+                return;
+            }
+            query.finish();
+            success = query.exec("CREATE TABLE ref_entries("
+                       "  id integer not null primary key,"
+                       "  collection_id integer not null default 0,"
+                       "  parent integer not null default 0,"
+                       "  icode text not null,"
+                       "  title text not null,"
+                       "  info text,"
+                       "  created text);");
+            if(!success){
+                qDebug() << query.lastError().text();
+                return;
+            }
+            query.finish();
+            success = query.exec("CREATE TABLE ref_notes("
+                       "  id integer not null primary key,"
+                       "  entry_id integer not null default 0,"
+                       "  title text,"
+                       "  body text,"
+                       "  created text,"
+                       "  lastmodified text);");
+            if(!success){
+                qDebug() << query.lastError().text();
+                return;
+            }
+            query.finish();
+            success = query.exec("CREATE VIRTUAL TABLE entry_index USING fts5("
+                       "  title, info, content='ref_entries', content_rowid='id');");
+            if(!success){
+                qDebug() << query.lastError().text();
+                return;
+            }
+            query.finish();
+            success = query.exec("CREATE TRIGGER entry_ai AFTER INSERT on ref_entries BEGIN"
+                       "  INSERT INTO entry_index(rowid, title, info)"
+                       "                  VALUES (new.id, new.title, new.info);"
+                       "END;");
+            if(!success){
+                qDebug() << query.lastError().text();
+                return;
+            }
+            query.finish();
+            success = query.exec("CREATE TRIGGER entry_ad AFTER DELETE on ref_entries BEGIN"
+                       "  DELETE FROM entry_index WHERE rowid=old.id;"
+                       "END;");
+            if(!success){
+                qDebug() << query.lastError().text();
+                return;
+            }
+            query.finish();
+            success = query.exec("CREATE TRIGGER entry_au AFTER UPDATE on ref_entries BEGIN"
+                       "  DELETE FROM entry_index WHERE rowid=old.id;"
+                       "  INSERT INTO entry_index(rowid, title, info)"
+                       "                  VALUES (new.id, new.title, new.info);"
+                       "END;");
+            if(!success){
+                qDebug() << query.lastError().text();
+            }
+            query.finish();
+            query.prepare( "INSERT INTO ref_libraries (icodeseq, created) VALUES (:icodeseq, :created)");
+            iCodeSeq = genICodeSeq();
+            //qDebug() << iCodeSeq.toHex();
+            query.bindValue( ":icodeseq", iCodeSeq);
+            query.bindValue( ":created", QDateTime::currentDateTime().toString());
+            if( !query.exec() ){
+                qDebug() << "Error inserting first library into table:\n" << query.lastError();
+            }
+            //qDebug() << genICodeSeq();
+        }else{
+            // TODO: use last library number
+            query.prepare("SELECT id, name, icodeseq FROM ref_libraries LIMIT 1");
+            if( !query.exec() ){
+                qDebug() << "Error inserting first library into table:\n" << query.lastError();
+            }else{
+                query.first();
+                lib_id = query.value(0).toInt();
+                qDebug() << "mainwindow lib_id=" << lib_id;
+                iCodeSeq = query.value(2).toByteArray();
+            }
+        }
+    }
+}
+
+QByteArray MainWindow::genICodeSeq()
+{
+    std::vector<quint16> idx(32768);
+    std::iota(std::begin(idx), std::end(idx), 0);
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    shuffle(idx.begin(), idx.end(), std::default_random_engine(seed));
+    QByteArray byteArray;
+    for(const auto& v: idx){
+        if(v<256){
+            byteArray.append('\0');
+        }else{
+            byteArray.append(v>>8);
+        }
+        byteArray.append(v & 0xff);
+    }
+    return byteArray;
+}

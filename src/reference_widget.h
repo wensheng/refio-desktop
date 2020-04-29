@@ -24,7 +24,7 @@ class ReferenceWidget : public QWidget
     Q_OBJECT
 
 public:
-    ReferenceWidget(QWidget *parent = nullptr);
+    ReferenceWidget(int lib_id, QWidget *parent = nullptr);
     CollectionsWidget *collectionsWidget;
     QWidget *rightWidget;
     EntriesWidget *entriesWidget;

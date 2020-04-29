@@ -6,9 +6,10 @@
 #include "constants.h"
 #include "entries_widget.h"
 #include "entry_details_widget.h"
-#include "treeitem.h"
-#include "treemodel.h"
+//#include "treeitem.h"
+//#include "treemodel.h"
 #include "mtree_model.h"
+#include "mainwindow.h"
 
 #include <QtWidgets>
 #include <QSqlDatabase>
@@ -70,10 +71,8 @@ void EntriesWidget::update(MTreeItem *mtreeItem){
     QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
     QList<QVector<QVariant>> modelData;
     QSqlQuery query(db);
-    //query.prepare("SELECT title, id, cid, parent, info, note FROM ref_entries where collection_id=:cid");
-    query.prepare("select title, id, parent, 0, info, note from ref_entries where collection_id=:cid");
+    query.prepare("select title, id, collection_id, parent, info from ref_entries where collection_id=:cid");
     query.bindValue(":cid", collection_id);
-    qDebug() << "db isOpen:" << db.isOpen();
 
     if(!query.exec()){
         qDebug() << query.lastError().text();
@@ -85,7 +84,6 @@ void EntriesWidget::update(MTreeItem *mtreeItem){
             result.push_back(query.value(2).toInt()); // cid
             result.push_back(query.value(3).toInt()); // parent
             result.push_back(query.value(4).toString()); // info
-            result.push_back(query.value(5).toString()); // note
             modelData.push_back(result);
             qDebug() << result;
         }
@@ -217,11 +215,16 @@ void EntriesWidget::handleEdit()
         QSqlQuery query(db);
 
         if(item->itemId() == -1){
-            query.prepare("insert into ref_entries (ci, parent, title, info, note) values (:ci, :parent, :title, \"\", \"\")");
+            MainWindow * mainWindow = qobject_cast<MainWindow *>(QApplication::activeWindow());
+            QString icode = mainWindow->getNextICode();
+            query.prepare("insert into ref_entries (collection_id, parent, icode, title, info, created)"
+                          "values (:ci, :parent, :icode, :title, \"\", :created)");
             query.bindValue(":ci", collection_id);
             // TODO: actually set parent
+            query.bindValue(":icode", icode);
             query.bindValue(":parent", 0);
             query.bindValue(":title", newTitle);
+            query.bindValue(":created", QDateTime::currentDateTime().toString(Qt::ISODate));
             if(!query.exec()){
                 qDebug() << query.lastError().text();
             }else{
