@@ -178,3 +178,11 @@ void CollectionsWidget::insertRow()
     }
 
 }
+
+void CollectionsWidget::showEvent(QShowEvent *event)
+{
+    //select the first row
+    QWidget::showEvent(event);
+    QModelIndex newIndex = treeView->model()->index(0,0);
+    treeView->selectionModel()->select(newIndex, QItemSelectionModel::Select);
+}

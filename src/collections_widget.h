@@ -29,6 +29,9 @@ public slots:
     void handleEdit();
     void insertRow();
 
+protected:
+      void showEvent(QShowEvent *event);
+
 private slots:
     void selectionChanged(const QItemSelection &newSelection, const QItemSelection &oldSelection);
     void newFile();

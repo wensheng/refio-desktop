@@ -71,7 +71,8 @@ void EntriesWidget::update(MTreeItem *mtreeItem){
     QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
     QList<QVector<QVariant>> modelData;
     QSqlQuery query(db);
-    query.prepare("select title, id, collection_id, parent, info from ref_entries where collection_id=:cid");
+    // order must be title, id, parent, rest...
+    query.prepare("select title, id, parent, icode, collection_id, info from ref_entries where collection_id=:cid");
     query.bindValue(":cid", collection_id);
 
     if(!query.exec()){
@@ -81,19 +82,21 @@ void EntriesWidget::update(MTreeItem *mtreeItem){
             QVector<QVariant> result;
             result.push_back(query.value(0).toString()); // title
             result.push_back(query.value(1).toInt()); // id
-            result.push_back(query.value(2).toInt()); // cid
-            result.push_back(query.value(3).toInt()); // parent
-            result.push_back(query.value(4).toString()); // info
+            result.push_back(query.value(2).toInt()); // parent
+            result.push_back(query.value(3).toInt()); // collection_id
+            result.push_back(query.value(4).toString()); // icode
+            result.push_back(query.value(5).toString()); // info
             modelData.push_back(result);
-            qDebug() << result;
         }
     }
+    qDebug() << "modelData size=" << modelData.size();
 
     auto oldModel = treeView->model();
-    QVector<QVariant> headers = {"Title", "id", "parent", "cid", "Info", "Note"};
+    QVector<QVariant> headers = {"Title", "id", "cid", "parent", "icode", "Note"};
     MTreeModel *mtreeModel = new MTreeModel(headers, modelData);
     treeView->setModel(mtreeModel);
     delete oldModel;
+    qDebug() << "treeview model has " << mtreeModel->rowCount() << "rows.";
     for (int column = 1; column < mtreeModel->columnCount(); ++column)
         treeView->setColumnHidden(column, true);
     treeView->resizeColumnToContents(0);

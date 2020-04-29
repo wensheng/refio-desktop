@@ -428,6 +428,8 @@ void MainWindow::setup_db()
     if (!db.open()) {
         qDebug() << "Can't connect to DB!";
     }else{
+        // increase page_size so we read large blob(ref_libraries.icodeseq) faster
+        db.exec("PRAGMA page_size = 8192");
         QSqlQuery query(db);
         if(createTables){
             bool success;
