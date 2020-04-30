@@ -15,6 +15,7 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
+#include <QUrl>
 
 EntriesWidget::EntriesWidget(QWidget *parent)
     : QWidget(parent),
@@ -41,6 +42,8 @@ EntriesWidget::EntriesWidget(QWidget *parent)
     connect(saveAct, &QAction::triggered, this, &EntriesWidget::removeRow);
     tb->addAction(saveAct);
 
+
+
     /*
     QVector<QVariant> headers = {"Title", "id", "parent", "cid", "Info", "Note"};
     QList<QVector<QVariant>> emptyData =  QList<QVector<QVariant>>();
@@ -64,6 +67,9 @@ EntriesWidget::EntriesWidget(QWidget *parent)
     layout->setContentsMargins(0,0,0,0);
     setLayout(layout);
     setObjectName(REF_ENTRIES_WIDGET_NAME);
+    setFocusPolicy(Qt::StrongFocus);
+    setAcceptDrops(true);
+    installEventFilter(this);
 }
 
 void EntriesWidget::update(MTreeItem *mtreeItem){
@@ -242,4 +248,50 @@ void EntriesWidget::handleEdit()
                 qDebug() << query.lastError().text();
             }
         }
+}
+
+bool EntriesWidget::eventFilter(QObject *obj, QEvent* event)
+{
+    if(event->type() == QEvent::KeyPress || event->type() == QEvent::ShortcutOverride){
+        QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+        //QWidget::keyPressEvent(keyEvent);
+        if (keyEvent->type() == QKeyEvent::KeyPress || keyEvent->type()== QEvent::ShortcutOverride){
+            if (keyEvent->matches(QKeySequence::Paste)){
+                QClipboard *clipboard = QGuiApplication::clipboard();
+                const QMimeData *data = clipboard->mimeData();
+                //QString cText = clipboard->text();
+                //qDebug() << cText;
+                handlePastedData(data);
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
+    return false;
+}
+
+void EntriesWidget::dropEvent(QDropEvent * event)
+{
+    handlePastedData(event->mimeData());
+    QWidget::dropEvent(event);
+}
+
+void EntriesWidget::dragEnterEvent(QDragEnterEvent *event)
+{
+    event->acceptProposedAction();
+}
+
+void EntriesWidget::handlePastedData(const QMimeData *data)
+{
+    if(data->hasText()){
+        qDebug() << data->text();
+    }
+    if (data->hasUrls()){
+        QStringList filePathList;
+        foreach (QUrl url, data->urls()){
+            filePathList << url.toLocalFile();
+        }
+        qDebug() << filePathList;
+    }
 }

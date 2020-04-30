@@ -38,6 +38,13 @@ public slots:
 private:
     EntryDetailsWidget *detailWidget;
     int collection_id;
+    bool eventFilter(QObject *, QEvent*) override;
+    void dropEvent(QDropEvent *event) override;
+    void dragMoveEvent(QDragMoveEvent *event) override{
+        event->accept();
+    }
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void handlePastedData(const QMimeData *data);
 
 private slots:
     void newFile();
