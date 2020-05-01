@@ -42,25 +42,6 @@ EntriesWidget::EntriesWidget(QWidget *parent)
     connect(saveAct, &QAction::triggered, this, &EntriesWidget::removeRow);
     tb->addAction(saveAct);
 
-
-
-    /*
-    QVector<QVariant> headers = {"Title", "id", "parent", "cid", "Info", "Note"};
-    QList<QVector<QVariant>> emptyData =  QList<QVector<QVariant>>();
-    mtreeModel = new MTreeModel(headers, emptyData);
-
-    treeView->setModel(mtreeModel);
-    //treeView->setHeaderHidden(true);
-    for (int column = 1; column < mtreeModel->columnCount(); ++column)
-        treeView->setColumnHidden(column, true);
-    treeView->resizeColumnToContents(0);
-
-    connect(treeView->selectionModel(), &QItemSelectionModel::selectionChanged,
-            this, &EntriesWidget::updateActions);
-
-    updateActions();
-    */
-
     auto layout = new QVBoxLayout();
     layout->setMenuBar(tb);
     layout->addWidget(treeView);
@@ -89,8 +70,8 @@ void EntriesWidget::update(MTreeItem *mtreeItem){
             result.push_back(query.value(0).toString()); // title
             result.push_back(query.value(1).toInt()); // id
             result.push_back(query.value(2).toInt()); // parent
-            result.push_back(query.value(3).toInt()); // collection_id
-            result.push_back(query.value(4).toString()); // icode
+            result.push_back(query.value(3).toString()); // icode
+            result.push_back(query.value(4).toInt()); // collection_id
             result.push_back(query.value(5).toString()); // info
             modelData.push_back(result);
         }
@@ -98,13 +79,14 @@ void EntriesWidget::update(MTreeItem *mtreeItem){
     qDebug() << "modelData size=" << modelData.size();
 
     auto oldModel = treeView->model();
-    QVector<QVariant> headers = {"Title", "id", "cid", "parent", "icode", "Note"};
+    QVector<QVariant> headers = {"Title", "id", "cid", "icode", "parent", "Note"};
     MTreeModel *mtreeModel = new MTreeModel(headers, modelData);
     treeView->setModel(mtreeModel);
     delete oldModel;
     qDebug() << "treeview model has " << mtreeModel->rowCount() << "rows.";
-    for (int column = 1; column < mtreeModel->columnCount(); ++column)
-        treeView->setColumnHidden(column, true);
+    for(int i=1;i<mtreeModel->columnCount();i++){
+        treeView->setColumnHidden(i, true); // id
+    }
     treeView->resizeColumnToContents(0);
     connect(treeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &EntriesWidget::updateActions);
     connect(treeView->model(), &QAbstractItemModel::dataChanged, this, &EntriesWidget::handleEdit);
@@ -180,27 +162,17 @@ void EntriesWidget::removeRow()
 
 void EntriesWidget::updateActions()
 {
-    //MTreeModel *model = (MTreeModel *) treeView->model();
     const bool hasSelection = !treeView->selectionModel()->selection().isEmpty();
-    qDebug() << "hasSelection:" << hasSelection;
-    //removeRowAction->setEnabled(hasSelection);
-
     const bool hasCurrent = treeView->selectionModel()->currentIndex().isValid();
-    qDebug() << "hasCurrent:" << hasCurrent;
-    //insertRowAction->setEnabled(hasCurrent);
+    QModelIndex idx = treeView->selectionModel()->currentIndex();
 
-    if (hasCurrent) {
-        QModelIndex idx = treeView->selectionModel()->currentIndex();
+    if (idx.isValid()) {
         MTreeModel *model = (MTreeModel *)treeView->model();
         //QVector<QVariant> rowData = model->getRowData(idx);
         MTreeItem *treeItem = model->getItem(idx);
-        //TODO combine
-        QSplitter *pw = (QSplitter*)this->parentWidget();
-        EntryDetailsWidget *detailsWidget = (EntryDetailsWidget*)(pw->widget(1));
-        qDebug() << detailsWidget;
-        //detailsWidget->updateDetail(rowData);
+        EntryDetailsWidget *detailsWidget = parentWidget()->findChild<EntryDetailsWidget*>(REF_ENTRY_DETAILS_WIDGET_NAME);
         detailsWidget->updateDetail(treeItem);
-        treeView->closePersistentEditor(treeView->selectionModel()->currentIndex());
+        //treeView->closePersistentEditor(treeView->selectionModel()->currentIndex());
 
         const int row = treeView->selectionModel()->currentIndex().row();
         const int column = treeView->selectionModel()->currentIndex().column();

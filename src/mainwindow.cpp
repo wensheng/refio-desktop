@@ -430,9 +430,13 @@ void MainWindow::setup_db()
     }else{
         // increase page_size so we read large blob(ref_libraries.icodeseq) faster
         db.exec("PRAGMA page_size = 8192");
+        db.exec("PRAGMA foreign_keys = ON");
+        // TODO: should we increase cache?
+        //db.exec("PRAGMA cache_size = 8192");
         QSqlQuery query(db);
         if(createTables){
             bool success;
+            /*
             success = query.exec("CREATE TABLE ref_libraries("
                        "  id integer not null primary key,"
                        "  name text not null default \"My Library\","
@@ -452,20 +456,35 @@ void MainWindow::setup_db()
                 qDebug() << query.lastError().text();
                 return;
             }
-            query.finish();
+            //query.finish();
+            success = query.exec("CREATE TABLE type_enum("
+                       "  type text not null primary key,"
+                       "  structure text not null default \"\");");
+            if(!success){
+                qDebug() << query.lastError().text();
+                return;
+            }
+            //query.finish();
+            query.exec("insert into type_enum(type) values(\"Webpage\")");
+            query.exec("insert into type_enum(type) values(\"Note\")");
+            query.exec("insert into type_enum(type) values(\"Article\")");
+            query.exec("insert into type_enum(type) values(\"Files\")");
+            query.exec("insert into type_enum(type) values(\"Book\")");
+            query.exec("insert into type_enum(type) values(\"Book Section\")");
             success = query.exec("CREATE TABLE ref_entries("
                        "  id integer not null primary key,"
                        "  collection_id integer not null default 0,"
                        "  parent integer not null default 0,"
                        "  icode text not null,"
                        "  title text not null,"
+                       "  type text not null references type_enum(type),"
                        "  info text,"
                        "  created text);");
             if(!success){
                 qDebug() << query.lastError().text();
                 return;
             }
-            query.finish();
+            //query.finish();
             success = query.exec("CREATE TABLE ref_notes("
                        "  id integer not null primary key,"
                        "  entry_id integer not null default 0,"
@@ -511,6 +530,24 @@ void MainWindow::setup_db()
                 qDebug() << query.lastError().text();
             }
             query.finish();
+            */
+            QFile schemaFile(":/schema.sql");
+            if(!schemaFile.open(QFile::ReadOnly)){
+                qDebug() << "Could not read schema file";
+                return;
+            }
+            QStringList sqls = QString(schemaFile.readAll()).split("-- #");
+            //qDebug() << sqls.at(1);
+            schemaFile.close();
+            for(const QString sql: sqls){
+                success = query.exec(sql);
+                if(!success){
+                    qDebug() << query.lastError().text();
+                    qDebug() << "sql=" << sql;
+                    return;
+                }
+            }
+
             query.prepare( "INSERT INTO ref_libraries (icodeseq, created) VALUES (:icodeseq, :created)");
             iCodeSeq = genICodeSeq();
             //qDebug() << iCodeSeq.toHex();

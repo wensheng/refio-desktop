@@ -33,6 +33,8 @@ void EntryDetailsWidget::setupTabs()
 
 void EntryDetailsWidget::updateDetail(const MTreeItem *data)
 {
+    //"Title", "id", "cid", "icode", "parent", "Note"
+    QString icode = data->data(3).toString();
     QString info = data->data(4).toString();
     QString note = data->data(5).toString();
     entryInfoTab->updateLabel(info);
