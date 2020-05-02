@@ -13,6 +13,7 @@
 #include "entry_note_tab.h"
 #include "mtree_item.h"
 #include "markdown_document.h"
+#include "standalone_editor.h"
 
 QT_BEGIN_NAMESPACE
 class QItemSelectionModel;
@@ -36,12 +37,15 @@ public:
 private:
     QPlainTextEdit *noteEdit;
     QWebEngineView *notePreview;
-    QWidget *standaloneEditor;
     MarkdownDocument m_content;
+    StandaloneEditor *standaloneEditor;
+    QPlainTextEdit *noteEdit2;
+    QWebEngineView *notePreview2;
     void setupTabs();
     void addNote();
     void previewNote();
-
+    void detachEditor();
+    void standaloneEditorClosed();
 };
 
 #endif
