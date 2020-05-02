@@ -9,26 +9,17 @@
 
 #include <QtWidgets>
 
-EntryNoteTab::EntryNoteTab(QWidget *parent)
-    : QWidget(parent)
+EntryNoteTab::EntryNoteTab(QPlainTextEdit *noteEdit, QWebEngineView *notePreview, QWidget *parent)
+    : QWidget(parent),
+      layout(new QVBoxLayout),
+      edit(noteEdit),
+      preview(notePreview)
 {
+    layout->addWidget(edit);
+    layout->addWidget(preview);
+    preview->setVisible(false);
 
-    noteLabel = new QLabel(tr("There are currently no contacts in your address book. "
-                                          "\nClick Add to add new contacts."));
-    QPlainTextEdit *textEdit = new QPlainTextEdit(this);
-    //auto doc = textEdit->document();
-    //auto *highlighter = new MarkdownHighlighter(doc);
-
-    auto addButton = new QPushButton(tr("Add"));
-
-    connect(addButton, &QAbstractButton::clicked, this, &EntryNoteTab::addEntry);
-
-    auto mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(noteLabel);
-    mainLayout->addWidget(textEdit);
-    mainLayout->addWidget(addButton, 0, Qt::AlignCenter);
-
-    setLayout(mainLayout);
+    setLayout(layout);
     setObjectName(REF_ENTRY_DETAILS_NOTE_TAB_NAME);
     qDebug() << metaObject()->className();
 }

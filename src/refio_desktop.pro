@@ -1,14 +1,16 @@
-QT += core gui sql widgets network gui-private
+QT += core gui sql widgets network gui-private  webenginewidgets
 TEMPLATE = app
 CONFIG += c++17
 
 #requires(qtConfig(listview))
 
-include ($$PWD/../third-parties/qmarkdowntextedit/qmarkdowntextedit.pri)
+include ($$PWD/third-parties/qmarkdowntextedit/qmarkdowntextedit.pri)
 
 SOURCES   += adddialog.cpp \
             about_refio_dialog.cpp \
             collections_widget.cpp \
+            markdown_document.cpp \
+            note_preview_page.cpp \
             reference_widget.cpp \
             entries_widget.cpp \
             entry_details_widget.cpp \
@@ -31,6 +33,8 @@ HEADERS   += adddialog.h \
             about_refio_dialog.h \
             collections_widget.h \
             constants.h \
+            markdown_document.h \
+            note_preview_page.h \
             reference_widget.h \
             entries_widget.h \
             entry_details_widget.h \

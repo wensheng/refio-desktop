@@ -8,9 +8,11 @@
 
 #include <QItemSelection>
 #include <QTabWidget>
+#include <QWebEngineView>
 #include "entry_info_tab.h"
 #include "entry_note_tab.h"
 #include "mtree_item.h"
+#include "markdown_document.h"
 
 QT_BEGIN_NAMESPACE
 class QItemSelectionModel;
@@ -32,7 +34,13 @@ public:
 //    void selectionChanged (const QItemSelection &selected);
 
 private:
+    QPlainTextEdit *noteEdit;
+    QWebEngineView *notePreview;
+    QWidget *standaloneEditor;
+    MarkdownDocument m_content;
     void setupTabs();
+    void addNote();
+    void previewNote();
 
 };
 
