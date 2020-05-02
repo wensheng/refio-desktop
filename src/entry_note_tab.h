@@ -21,6 +21,7 @@ class EntryNoteTab : public QWidget
 public:
     EntryNoteTab(QWidget *parent = nullptr);
     void updateLabel(const QString &);
+    void updateTab(const QList<QVector<QVariant>> &);
 
 public slots:
     void addEntry();

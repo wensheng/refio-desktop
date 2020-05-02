@@ -6,9 +6,6 @@
 #include "constants.h"
 #include "entries_widget.h"
 #include "entry_details_widget.h"
-//#include "treeitem.h"
-//#include "treemodel.h"
-#include "mtree_model.h"
 #include "mainwindow.h"
 
 #include <QtWidgets>
@@ -51,15 +48,19 @@ EntriesWidget::EntriesWidget(QWidget *parent)
     setFocusPolicy(Qt::StrongFocus);
     setAcceptDrops(true);
     installEventFilter(this);
+    qDebug() << metaObject()->className();
 }
 
-void EntriesWidget::update(MTreeItem *mtreeItem){
+/*
+ * called by CollectionsWidget when click on a collection
+ */
+void EntriesWidget::update(const MTreeItem *mtreeItem){
     collection_id = mtreeItem->itemId();
     QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
     QList<QVector<QVariant>> modelData;
     QSqlQuery query(db);
     // order must be title, id, parent, rest...
-    query.prepare("select title, id, parent, icode, collection_id, info from ref_entries where collection_id=:cid");
+    query.prepare("select title, id, parent, icode, collection_id, info, created from ref_entries where collection_id=:cid");
     query.bindValue(":cid", collection_id);
 
     if(!query.exec()){
@@ -73,17 +74,18 @@ void EntriesWidget::update(MTreeItem *mtreeItem){
             result.push_back(query.value(3).toString()); // icode
             result.push_back(query.value(4).toInt()); // collection_id
             result.push_back(query.value(5).toString()); // info
+            result.push_back(query.value(6).toString()); // created
             modelData.push_back(result);
         }
     }
-    qDebug() << "modelData size=" << modelData.size();
+    //qDebug() << "modelData size=" << modelData.size();
 
     auto oldModel = treeView->model();
-    QVector<QVariant> headers = {"Title", "id", "cid", "icode", "parent", "Note"};
+    QVector<QVariant> headers = {"Title", "id", "cid", "icode", "parent", "Note", "Created"};
     MTreeModel *mtreeModel = new MTreeModel(headers, modelData);
     treeView->setModel(mtreeModel);
     delete oldModel;
-    qDebug() << "treeview model has " << mtreeModel->rowCount() << "rows.";
+    //qDebug() << "treeview model has " << mtreeModel->rowCount() << "rows.";
     for(int i=1;i<mtreeModel->columnCount();i++){
         treeView->setColumnHidden(i, true); // id
     }
@@ -198,12 +200,14 @@ void EntriesWidget::handleEdit()
         if(item->itemId() == -1){
             MainWindow * mainWindow = qobject_cast<MainWindow *>(QApplication::activeWindow());
             QString icode = mainWindow->getNextICode();
-            query.prepare("insert into ref_entries (collection_id, parent, icode, title, info, created)"
-                          "values (:ci, :parent, :icode, :title, \"\", :created)");
+            query.prepare("INSERT INTO ref_entries (collection_id, parent, icode, type, title, info, created)"
+                          "values (:ci, :parent, :icode, :type, :title, \"\", :created)");
             query.bindValue(":ci", collection_id);
             // TODO: actually set parent
-            query.bindValue(":icode", icode);
             query.bindValue(":parent", 0);
+            query.bindValue(":icode", icode);
+            // TODO: real type
+            query.bindValue(":type", "Note");
             query.bindValue(":title", newTitle);
             query.bindValue(":created", QDateTime::currentDateTime().toString(Qt::ISODate));
             if(!query.exec()){

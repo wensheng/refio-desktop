@@ -25,6 +25,7 @@ EntryInfoTab::EntryInfoTab(QWidget *parent)
 
     setLayout(mainLayout);
     setObjectName(REF_ENTRY_DETAILS_INFO_TAB_NAME);
+    qDebug() << metaObject()->className();
 }
 
 void EntryInfoTab::addEntry()

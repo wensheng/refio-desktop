@@ -216,18 +216,18 @@ void MTreeModel::setupModelData(const QList<QVector<QVariant>> &lines, MTreeItem
     for(int i=0; i<lines.size(); i++) {
         QVector<QVariant> line = lines.at(i);
         int idx = line.at(1).toInt();
-        int pid = line.at(2).toInt();
-        if(pid==0){
+        int parent_id = line.at(2).toInt();
+        if(parent_id==0){
             //root item
             MTreeItem *item = new MTreeItem(idx, line, parent);
             hash[idx] = item;
             parent->insertChild(item);
         }else{
             //child item
-            if(hash.contains(pid)){
-                MTreeItem *item = new MTreeItem(idx, line, hash[pid]);
+            if(hash.contains(parent_id)){
+                MTreeItem *item = new MTreeItem(idx, line, hash[parent_id]);
                 hash[idx] = item;
-                hash[pid]->insertChild(item);
+                hash[parent_id]->insertChild(item);
             }else{
                 //item with parent id that cannot be found in hash
                 //  will be ignored

@@ -28,7 +28,7 @@ public:
     EntriesWidget(QWidget *parent = nullptr);
     //AddressWidget *addressWidget;
     MTreeView *treeView;
-    void update(MTreeItem *mtreeItem);
+    void update(const MTreeItem *mtreeItem);
 
 public slots:
     void updateActions();

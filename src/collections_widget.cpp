@@ -22,6 +22,7 @@ CollectionsWidget::CollectionsWidget(int lib_id, QWidget *parent)
 {
     QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
     QList<QVector<QVariant>> modelData;
+    modelData.push_back({"Default Collection", 0, 0});
     QSqlQuery query(db);
     query.prepare("SELECT name, id, parent FROM ref_collections where lib_id=:lib_id");
     query.bindValue(":lib_id", lib_id);
@@ -37,7 +38,7 @@ CollectionsWidget::CollectionsWidget(int lib_id, QWidget *parent)
         }
     }
 
-    QVector<QVariant> headers = {0, "title", 0};
+    QVector<QVariant> headers = {"name", 0, 0};
     mtreeModel = new MTreeModel(headers, modelData);
 
     auto tb = new QToolBar();
@@ -68,16 +69,22 @@ CollectionsWidget::CollectionsWidget(int lib_id, QWidget *parent)
         treeView->setColumnHidden(column, true);
 
     //selection changes shall trigger a slot
-    QItemSelectionModel *selectionModel = treeView->selectionModel();
-    connect(selectionModel, &QItemSelectionModel::selectionChanged,
+    connect(treeView->selectionModel(), &QItemSelectionModel::selectionChanged,
                 this, &CollectionsWidget::selectionChanged);
     connect(treeView->model(), &QAbstractItemModel::dataChanged, this, &CollectionsWidget::handleEdit);
+
+    // here selectionChanged will be invoked, in there will update entriesWidget
+    // but entriesWidget is not instantiated at this time, so program will crash here
+    // so we use showEvent
+    //QModelIndex idxFirst = treeView->model()->index(0,0);
+    //treeView->selectionModel()->setCurrentIndex(idxFirst, QItemSelectionModel::SelectCurrent);
 
     auto layout = new QVBoxLayout();
     layout->setMenuBar(tb);
     layout->addWidget(treeView);
     layout->setContentsMargins(0,0,0,0);
     setLayout(layout);
+    qDebug() << metaObject()->className();
 }
 
 void CollectionsWidget::newFile()
@@ -99,9 +106,8 @@ void CollectionsWidget::selectionChanged(const QItemSelection &newSelection, con
 {
     //get the text of the selected item
     const QModelIndex index = treeView->selectionModel()->currentIndex();
-    MTreeItem *item = mtreeModel->getItem(index);
-    QSplitter *pw = (QSplitter*)this->parentWidget();
-    EntriesWidget *entriesWidget = pw->findChild<EntriesWidget *>(REF_ENTRIES_WIDGET_NAME);
+    const MTreeItem *item = mtreeModel->getItem(index);
+    EntriesWidget *entriesWidget = parentWidget()->findChild<EntriesWidget *>(REF_ENTRIES_WIDGET_NAME);
     entriesWidget->update(item);
 
     QString selectedText = index.data(Qt::DisplayRole).toString();
@@ -183,6 +189,6 @@ void CollectionsWidget::showEvent(QShowEvent *event)
 {
     //select the first row
     QWidget::showEvent(event);
-    QModelIndex newIndex = treeView->model()->index(0,0);
-    treeView->selectionModel()->select(newIndex, QItemSelectionModel::Select);
+    QModelIndex idxFirst = treeView->model()->index(0,0);
+    treeView->selectionModel()->setCurrentIndex(idxFirst, QItemSelectionModel::SelectCurrent);
 }

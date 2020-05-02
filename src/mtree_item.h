@@ -22,9 +22,7 @@ public:
     QVariant data(int column) const;
     void insertChild(MTreeItem *const &);
     MTreeItem *parent();
-    int itemId() const{
-        return iid;
-    }
+    int itemId() const;
     void setItemId(int itemId){
         iid = itemId;
     }

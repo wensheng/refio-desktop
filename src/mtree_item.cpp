@@ -31,7 +31,11 @@ MTreeItem *MTreeItem::child(int number)
     return childItems.at(number);
 }
 
-//! [3]
+int MTreeItem::itemId() const
+{
+    return iid;
+}
+
 int MTreeItem::childCount() const
 {
     return childItems.size();

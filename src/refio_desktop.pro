@@ -1,7 +1,12 @@
-QT += sql widgets
-requires(qtConfig(listview))
+QT += core gui sql widgets network gui-private
+TEMPLATE = app
+CONFIG += c++17
 
-SOURCES   = adddialog.cpp \
+#requires(qtConfig(listview))
+
+include ($$PWD/../third-parties/qmarkdowntextedit/qmarkdowntextedit.pri)
+
+SOURCES   += adddialog.cpp \
             about_refio_dialog.cpp \
             collections_widget.cpp \
             reference_widget.cpp \
@@ -21,7 +26,8 @@ SOURCES   = adddialog.cpp \
             mtree_item.cpp \
             mtree_model.cpp \
             tablemodel.cpp
-HEADERS   = adddialog.h \
+
+HEADERS   += adddialog.h \
             about_refio_dialog.h \
             collections_widget.h \
             constants.h \
@@ -42,7 +48,7 @@ HEADERS   = adddialog.h \
             mtree_model.h \
             tablemodel.h
 
-RESOURCES = application.qrc
+RESOURCES += application.qrc
 
 # install
 target.path = refio_desktop

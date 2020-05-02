@@ -75,6 +75,7 @@ ReferenceWidget::ReferenceWidget(int lib_id, QWidget *parent)
     setLayout(layout);
     // uncomment to adjust layout
     //setStyleSheet("border: 1px solid red");
+    qDebug() << metaObject()->className();
 }
 
 void ReferenceWidget::newFile()
