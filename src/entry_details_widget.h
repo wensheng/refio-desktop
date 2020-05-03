@@ -6,14 +6,16 @@
 #ifndef ENTRY_DETAILS_WIDGET_H
 #define ENTRY_DETAILS_WIDGET_H
 
-#include <QItemSelection>
-#include <QTabWidget>
-#include <QWebEngineView>
 #include "entry_info_tab.h"
 #include "entry_note_tab.h"
 #include "mtree_item.h"
 #include "markdown_document.h"
 #include "standalone_editor.h"
+
+#include <QItemSelection>
+#include <QTabWidget>
+#include <QWebEngineView>
+#include <QSplitter>
 
 QT_BEGIN_NAMESPACE
 class QItemSelectionModel;
@@ -39,12 +41,13 @@ private:
     QWebEngineView *notePreview;
     MarkdownDocument m_content;
     StandaloneEditor *standaloneEditor;
-    QPlainTextEdit *noteEdit2;
-    QWebEngineView *notePreview2;
+    QSplitter *standaloneEditorSplitter;
+    EntryNoteTab *noteTab;
+    bool isPreviewing;
     void setupTabs();
     void addNote();
     void previewNote();
-    void detachEditor();
+    void openStandaloneEditor();
     void standaloneEditorClosed();
 };
 

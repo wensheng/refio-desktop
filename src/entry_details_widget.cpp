@@ -17,13 +17,14 @@
 
 EntryDetailsWidget::EntryDetailsWidget(QWidget *parent)
     : QTabWidget(parent),
-      entryInfoTab(new EntryInfoTab(this))
+      entryInfoTab(new EntryInfoTab(this)),
+      standaloneEditor(new StandaloneEditor)
 {
     //auto tb = new QToolBar();
     //tb->addAction("hello");
     //tb->addAction("world");
     //connect(entryInfoTab, &EntryInfoTab::sendDetails, this, &EntryDetailsWidget::addEntry);
-
+    isPreviewing = false;
 
     addTab(entryInfoTab, tr("Info"));
     QTabWidget *notesTab = new QTabWidget(this);
@@ -41,7 +42,7 @@ EntryDetailsWidget::EntryDetailsWidget(QWidget *parent)
 
     const QIcon standaloneIcon = QIcon::fromTheme("document-save", QIcon(":/images/save.png"));
     QAction *openStandalone = new QAction(standaloneIcon, tr("&Standalone"), this);
-    connect(openStandalone, &QAction::triggered, this, &EntryDetailsWidget::detachEditor);
+    connect(openStandalone, &QAction::triggered, this, &EntryDetailsWidget::openStandaloneEditor);
     tb->addAction(openStandalone);
 
     //QToolButton *btn = new QToolButton(notesTab);
@@ -64,35 +65,17 @@ EntryDetailsWidget::EntryDetailsWidget(QWidget *parent)
     page->setWebChannel(channel);
     notePreview->setUrl(QUrl("qrc:/index.html"));
 
-    standaloneEditor = new StandaloneEditor;
     QHBoxLayout *standaloneEditorLayout = new QHBoxLayout(standaloneEditor);
-    QSplitter *splitter = new QSplitter(Qt::Horizontal, standaloneEditor);
-    noteEdit2 = new QPlainTextEdit(standaloneEditor);
-    auto doc2 = noteEdit2->document();
-    auto *highlighter2 = new MarkdownHighlighter(doc2);
-    notePreview2 = new QWebEngineView(standaloneEditor);
-    notePreview2->setContextMenuPolicy(Qt::NoContextMenu);
-    NotePreviewPage *page2 = new NotePreviewPage(standaloneEditor);
-    notePreview2->setPage(page2);
-    connect(noteEdit2, &QPlainTextEdit::textChanged, [this]() { m_content.setText(noteEdit2->toPlainText()); });
-    splitter->addWidget(noteEdit2);
-    splitter->addWidget(notePreview2);
-    standaloneEditorLayout->addWidget(splitter);
+    standaloneEditorSplitter = new QSplitter(Qt::Horizontal, standaloneEditor);
+    standaloneEditorLayout->addWidget(standaloneEditorSplitter);
     standaloneEditor->setLayout(standaloneEditorLayout);
     standaloneEditor->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     standaloneEditor->setMaximumSize(1280, 800);
     standaloneEditor->resize(1280, 800);
-    splitter->setSizes({640, 640});
-
-    QWebChannel *channel2 = new QWebChannel(standaloneEditor);
-    channel2->registerObject(QStringLiteral("content"), &m_content);
-    page2->setWebChannel(channel2);
     standaloneEditor->hide();
-    notePreview2->setUrl(QUrl("qrc:/index.html"));
-
     connect(standaloneEditor, &StandaloneEditor::beClosed, this, &EntryDetailsWidget::standaloneEditorClosed);
 
-    EntryNoteTab *noteTab = new EntryNoteTab(noteEdit, notePreview);
+    noteTab = new EntryNoteTab(noteEdit, notePreview);
     notesTab->addTab(noteTab, tr("Note"));
 
     addTab(notesTab, tr("Notes"));
@@ -115,7 +98,18 @@ void EntryDetailsWidget::addNote()
 
 void EntryDetailsWidget::standaloneEditorClosed()
 {
-    noteEdit->document()->setPlainText(noteEdit2->toPlainText());
+    //noteEdit->document()->setPlainText(noteEdit2->toPlainText());
+    noteEdit->setParent(noteTab);
+    notePreview->setParent(noteTab);
+    if(isPreviewing){
+        noteEdit->setVisible(false);
+        notePreview->setVisible(true);
+        notePreview->show();
+    }else{
+        noteEdit->setVisible(true);
+        notePreview->setVisible(false);
+        noteEdit->show();
+    }
 }
 
 
@@ -124,15 +118,22 @@ void EntryDetailsWidget::previewNote()
     if(noteEdit->isVisible()){
         noteEdit->setVisible(false);
         notePreview->setVisible(true);
+        isPreviewing = true;
     }else{
         noteEdit->setVisible(true);
         notePreview->setVisible(false);
+        isPreviewing = false;
     }
 }
 
-void EntryDetailsWidget::detachEditor()
+void EntryDetailsWidget::openStandaloneEditor()
 {
-    noteEdit2->document()->setPlainText(noteEdit->toPlainText());
+    //noteEdit2->document()->setPlainText(noteEdit->toPlainText());
+    noteEdit->setParent(standaloneEditorSplitter);
+    noteEdit->show();
+    notePreview->setParent(standaloneEditorSplitter);
+    notePreview->show();
+    standaloneEditorSplitter->setSizes({640, 640});
     standaloneEditor->show();
 }
 
