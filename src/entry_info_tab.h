@@ -1,35 +1,31 @@
-/****************************************************************************
-**
-**
-****************************************************************************/
-
 #ifndef ENTRY_INFO_TAB_H
 #define ENTRY_INFO_TAB_H
 
+#include "mtree_item.h"
 #include <QWidget>
 
-QT_BEGIN_NAMESPACE
-class QLabel;
-class QPushButton;
-class QVBoxLayout;
-QT_END_NAMESPACE
+namespace Ui {
+class EntryInfoTab;
+}
 
 class EntryInfoTab : public QWidget
 {
     Q_OBJECT
 
 public:
-    EntryInfoTab(QWidget *parent = nullptr);
-    void updateLabel(const QString &);
-
-public slots:
-    void addEntry();
-
-signals:
-    void sendDetails(const QString &name, const QString &address);
+    explicit EntryInfoTab(QWidget *parent = nullptr);
+    ~EntryInfoTab();
+     void updateLabel(const MTreeItem *entry);
 
 private:
-    QLabel *infoLabel;
+    Ui::EntryInfoTab *ui;
+    bool eventFilter(QObject *watched, QEvent *event);
+    void titleChanged();
+    int entryId;
+
+private slots:
+    void titlePushButtonClicked();
+    void saveEntryInfo();
 };
 
-#endif
+#endif // ENTRY_INFO_TAB_H

@@ -9,16 +9,10 @@
 
 #include <QtWidgets>
 
-EntryNoteTab::EntryNoteTab(QPlainTextEdit *noteEdit, QWebEngineView *notePreview, QWidget *parent)
+EntryNoteTab::EntryNoteTab(QWidget *parent)
     : QWidget(parent),
-      layout(new QVBoxLayout),
-      edit(noteEdit),
-      preview(notePreview)
+      layout(new QVBoxLayout)
 {
-    layout->addWidget(edit);
-    layout->addWidget(preview);
-    preview->setVisible(false);
-
     setLayout(layout);
     setObjectName(REF_ENTRY_DETAILS_NOTE_TAB_NAME);
     qDebug() << metaObject()->className();
@@ -29,7 +23,16 @@ void EntryNoteTab::addEntry()
 
 }
 
-void EntryNoteTab::updateLabel(const QString &qs){
+void EntryNoteTab::setup(QPlainTextEdit *edit, QWebEngineView *view)
+{
+    layout->addWidget(edit);
+    layout->addWidget(view);
+    edit->show();
+    view->hide();
+}
+
+void EntryNoteTab::updateLabel(const QString &qs)
+{
     noteLabel->setText(qs);
 }
 

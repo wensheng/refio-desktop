@@ -9,12 +9,12 @@ include ($$PWD/third-parties/qmarkdowntextedit/qmarkdowntextedit.pri)
 SOURCES   += adddialog.cpp \
             about_refio_dialog.cpp \
             collections_widget.cpp \
+            entry_info_tab.cpp \
             markdown_document.cpp \
             note_preview_page.cpp \
             reference_widget.cpp \
             entries_widget.cpp \
             entry_details_widget.cpp \
-            entry_info_tab.cpp \
             entry_note_tab.cpp \
             slipbox_widget.cpp \
             addresswidget.cpp \
@@ -34,12 +34,12 @@ HEADERS   += adddialog.h \
             about_refio_dialog.h \
             collections_widget.h \
             constants.h \
+            entry_info_tab.h \
             markdown_document.h \
             note_preview_page.h \
             reference_widget.h \
             entries_widget.h \
             entry_details_widget.h \
-            entry_info_tab.h \
             entry_note_tab.h \
             slipbox_widget.h \
             addresswidget.h \
@@ -59,3 +59,6 @@ RESOURCES += application.qrc
 # install
 target.path = refio_desktop
 INSTALLS += target
+
+FORMS += \
+    entry_info_tab.ui

@@ -21,7 +21,8 @@ class EntryNoteTab : public QWidget
     Q_OBJECT
 
 public:
-    EntryNoteTab(QPlainTextEdit *noteEdit, QWebEngineView *notePreview, QWidget *parent = nullptr);
+    EntryNoteTab(QWidget *parent = nullptr);
+    void setup(QPlainTextEdit *edit, QWebEngineView *view);
     void updateLabel(const QString &);
     void updateTab(const QList<QVector<QVariant>> &);
 
@@ -33,8 +34,6 @@ signals:
 private:
     QLabel *noteLabel;
     QVBoxLayout *layout;
-    QPlainTextEdit *edit;
-    QWebEngineView *preview;
 };
 
 #endif

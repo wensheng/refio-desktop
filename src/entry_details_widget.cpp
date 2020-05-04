@@ -18,18 +18,22 @@
 EntryDetailsWidget::EntryDetailsWidget(QWidget *parent)
     : QTabWidget(parent),
       entryInfoTab(new EntryInfoTab(this)),
+      notesTabWidget(new QTabWidget(this)),
       standaloneEditor(new StandaloneEditor)
 {
-    //auto tb = new QToolBar();
-    //tb->addAction("hello");
-    //tb->addAction("world");
-    //connect(entryInfoTab, &EntryInfoTab::sendDetails, this, &EntryDetailsWidget::addEntry);
+    entryId = 0;
+    currentNoteId = 0;
     isPreviewing = false;
 
     addTab(entryInfoTab, tr("Info"));
-    QTabWidget *notesTab = new QTabWidget(this);
 
     auto tb = new QToolBar();
+
+    const QIcon standaloneIcon = QIcon::fromTheme("document-save", QIcon(":/images/save.png"));
+    QAction *openStandalone = new QAction(standaloneIcon, tr("&Standalone"), this);
+    connect(openStandalone, &QAction::triggered, this, &EntryDetailsWidget::openStandaloneEditor);
+    tb->addAction(openStandalone);
+
     const QIcon newIcon = QIcon::fromTheme("document-new", QIcon(":/images/new.png"));
     QAction *newAct = new QAction(newIcon, tr("&Add Note"), this);
     connect(newAct, &QAction::triggered, this, &EntryDetailsWidget::addNote);
@@ -40,16 +44,16 @@ EntryDetailsWidget::EntryDetailsWidget(QWidget *parent)
     connect(openAct, &QAction::triggered, this, &EntryDetailsWidget::previewNote);
     tb->addAction(openAct);
 
-    const QIcon standaloneIcon = QIcon::fromTheme("document-save", QIcon(":/images/save.png"));
-    QAction *openStandalone = new QAction(standaloneIcon, tr("&Standalone"), this);
-    connect(openStandalone, &QAction::triggered, this, &EntryDetailsWidget::openStandaloneEditor);
-    tb->addAction(openStandalone);
+    const QIcon saveNoteIcon = QIcon::fromTheme("document-save", QIcon(":/images/save.png"));
+    QAction *saveNoteAct = new QAction(saveNoteIcon, tr("&Save Note"), this);
+    connect(saveNoteAct, &QAction::triggered, this, &EntryDetailsWidget::saveNote);
+    tb->addAction(saveNoteAct);
 
     //QToolButton *btn = new QToolButton(notesTab);
     //btn->setText("Add Note");
     //btn->setCursor(Qt::ArrowCursor);
     //btn->setAutoRaise(true);
-    notesTab->setCornerWidget(tb, Qt::TopRightCorner);
+    notesTabWidget->setCornerWidget(tb, Qt::TopRightCorner);
 
     noteEdit = new QPlainTextEdit(this);
     auto doc = noteEdit->document();
@@ -73,34 +77,66 @@ EntryDetailsWidget::EntryDetailsWidget(QWidget *parent)
     standaloneEditor->setMaximumSize(1280, 800);
     standaloneEditor->resize(1280, 800);
     standaloneEditor->hide();
+    standaloneEditor->setWindowTitle(tr("Markdown Editor"));
+    standaloneEditor->setWindowIcon(QIcon(":/images/save.png"));
     connect(standaloneEditor, &StandaloneEditor::beClosed, this, &EntryDetailsWidget::standaloneEditorClosed);
 
-    noteTab = new EntryNoteTab(noteEdit, notePreview);
-    notesTab->addTab(noteTab, tr("Note"));
+    firstNoteTab = new EntryNoteTab;
+    firstNoteTab->setup(noteEdit, notePreview);
+    notesTabWidget->addTab(firstNoteTab, tr("Note 1"));
+    connect(notesTabWidget, &QTabWidget::currentChanged, this, &EntryDetailsWidget::currentTabChanged);
 
-    addTab(notesTab, tr("Notes"));
+    addTab(notesTabWidget, tr("Notes"));
 
-    //setupTabs();
     setObjectName(REF_ENTRY_DETAILS_WIDGET_NAME);
     qDebug() << metaObject()->className();
 }
 
-void EntryDetailsWidget::setupTabs()
-{
-    addTab(entryNoteTab, tr("Notes"));
-
-}
-
 void EntryDetailsWidget::addNote()
 {
+    if(notes.count() < notesTabWidget->count()){
+        QMessageBox::warning(this,
+                             tr("Warning"),
+                             tr("Please edit/save current note before creating new note") );
+        return;
+    }
+    currentNoteId = 0;
+    int oldCount = noteIds.count();
+    QString tabTitle("Note ");
+    tabTitle = tabTitle.append(QString::number(oldCount + 1));
+    notesTabWidget->addTab(new EntryNoteTab, tabTitle);
+    notesTabWidget->setCurrentIndex(oldCount);
+    //noteEdit->setParent(tab);
+    //notePreview->setParent(tab);
+    //noteEdit->setPlainText("");
+    //noteEdit->show();
+    //notePreview->hide();
+    //currentTabChanged will be called
+}
 
+void EntryDetailsWidget::currentTabChanged(int index)
+{
+    EntryNoteTab *tab = qobject_cast<EntryNoteTab*>(notesTabWidget->currentWidget());
+    noteEdit->setParent(tab);
+    if(noteIds.count() <= index){
+        // newly added tab
+        noteEdit->setPlainText("");
+    }else{
+        noteEdit->setPlainText(notes[noteIds[index]]);
+        currentNoteId = noteIds[index];
+    }
+    noteEdit->show();
+    notePreview->setParent(tab);
+    notePreview->hide();
+    qDebug() << "current index:" << index << ", currentNoteId:" << currentNoteId;
 }
 
 void EntryDetailsWidget::standaloneEditorClosed()
 {
     //noteEdit->document()->setPlainText(noteEdit2->toPlainText());
-    noteEdit->setParent(noteTab);
-    notePreview->setParent(noteTab);
+    // TODO:
+    //noteEdit->setParent(noteTab);
+    //notePreview->setParent(noteTab);
     if(isPreviewing){
         noteEdit->setVisible(false);
         notePreview->setVisible(true);
@@ -139,32 +175,83 @@ void EntryDetailsWidget::openStandaloneEditor()
 
 void EntryDetailsWidget::updateDetail(const MTreeItem *entry)
 {
-    //"Title", "id", "cid", "icode", "parent", "Note"
-    int entry_id = entry->itemId();
+    entryId = entry->itemId();
+    entryInfoTab->updateLabel(entry);
 
-    QString info("iCode: ");
-    info = info.append(entry->data(3).toString()).append("\n");
-    info = info.append("Title: ").append(entry->data(0).toString()).append("\n");
-    info = info.append("Created: ").append(entry->data(6).toString());
-    entryInfoTab->updateLabel(info);
+    notes.clear();
+    noteIds.clear();
+    // remove all nota tabs except first one
+    for(int i=0; i< noteWidgets.size(); i++){
+        delete noteWidgets.at(i);
+    }
+    noteWidgets.clear();
+
+    int count = notesTabWidget->count();
+    for(int i=1; i < count; i++){
+        notesTabWidget->removeTab(i);
+    }
 
     QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
-    QList<QVector<QVariant>> notes;
     QSqlQuery query(db);
-    query.prepare("select id, entry_id, title, body, created from ref_notes where entry_id=:eid");
-    query.bindValue(":eid", entry_id);
+    query.prepare("select id, body from ref_notes where entry_id=:eid");
+    query.bindValue(":eid", entryId);
     if(!query.exec()){
         qDebug() << query.lastError().text();
     }else{
         while (query.next()) {
-            QVector<QVariant> result;
-            result.push_back(query.value(0).toInt()); // id
-            result.push_back(query.value(1).toInt()); // eid
-            result.push_back(query.value(2).toString()); // title
-            result.push_back(query.value(3).toString()); // body
-            result.push_back(query.value(4).toString()); // created
-            notes.push_back(result);
+            noteIds.append(query.value(0).toInt());
+            notes.insert(query.value(0).toInt(),  query.value(1).toString());
         }
     }
-    entryNoteTab->updateTab(notes);
+    firstNoteTab->setup(noteEdit, notePreview);
+    if(!notes.isEmpty()){
+        noteEdit->setPlainText(notes[noteIds.at(0)]);
+        if(notes.count()>1){
+            for(int i=1;i<notes.size();i++){
+                EntryNoteTab *noteTab = new EntryNoteTab;
+                noteWidgets.append(noteTab);
+                notesTabWidget->addTab(noteTab, tr("Note"));
+            }
+        }
+        //EntryNoteTab *first = noteWidgets.last();
+        //first->setup(noteEdit, notePreview);
+    }
+    //entryNoteTab->updateTab(notes);
+}
+
+void EntryDetailsWidget::saveNote()
+{
+    QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
+    QSqlQuery query(db);
+    if(currentNoteId == 0){
+        query.prepare("insert into ref_notes (entry_id, title, body, created)"
+                      "values (:entry_id, :title, :body, :created)");
+        query.bindValue(":entry_id", entryId);
+        QString body = noteEdit->toPlainText();
+        query.bindValue(":body", body);
+        QStringList ss = body.split("\n");
+        query.bindValue(":title", ss.at(0));
+        query.bindValue(":created", QDateTime::currentDateTime().toString(Qt::ISODate));
+        if(!query.exec()){
+            qDebug() << query.lastError().text();
+        }else{
+            int iid = query.lastInsertId().toInt();
+            qDebug() << "lastInsertId()=" << iid;
+            noteIds.append(iid);
+            notes.insert(iid, body);
+            currentNoteId = iid;
+        }
+    }else{
+        query.prepare("update ref_notes set "
+                      " title = :title, "
+                      " body = :body where id = :note_id");
+        query.bindValue(":note_id", currentNoteId);
+        QString body = noteEdit->toPlainText();
+        query.bindValue(":body", body);
+        QStringList ss = body.split("\n");
+        query.bindValue(":title", ss.at(0));
+        if(!query.exec()){
+            qDebug() << query.lastError().text();
+        }
+    }
 }

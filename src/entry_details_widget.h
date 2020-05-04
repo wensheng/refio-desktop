@@ -12,6 +12,7 @@
 #include "markdown_document.h"
 #include "standalone_editor.h"
 
+#include <QHash>
 #include <QItemSelection>
 #include <QTabWidget>
 #include <QWebEngineView>
@@ -31,24 +32,33 @@ public:
     EntryNoteTab *entryNoteTab;
     void updateDetail(const MTreeItem *data);
 
-//public slots:
+public slots:
+    void saveNote();
 
 //signals:
 //    void selectionChanged (const QItemSelection &selected);
 
 private:
+    QTabWidget *notesTabWidget;
+    EntryNoteTab *firstNoteTab;
     QPlainTextEdit *noteEdit;
     QWebEngineView *notePreview;
     MarkdownDocument m_content;
     StandaloneEditor *standaloneEditor;
     QSplitter *standaloneEditorSplitter;
-    EntryNoteTab *noteTab;
+    QList<EntryNoteTab*> noteWidgets;
+    QHash<int, QString> notes;
+    QList<int> noteIds;
     bool isPreviewing;
-    void setupTabs();
+    int entryId;
+    int currentNoteId;
     void addNote();
     void previewNote();
     void openStandaloneEditor();
     void standaloneEditorClosed();
+
+private slots:
+    void currentTabChanged(int index);
 };
 
 #endif
