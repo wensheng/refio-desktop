@@ -53,6 +53,7 @@
 
 #include "reference_widget.h"
 #include "slipbox_widget.h"
+#include "QSimpleUpdater.h"
 
 #include <QMainWindow>
 #include <QDesktopServices>
@@ -66,6 +67,11 @@ public:
     MainWindow();
     ~MainWindow();
     QString getNextICode();
+
+public slots:
+    void checkForUpdates();
+    //void updateChangelog(const QString& url);
+    //void displayAppcast (const QString& url, const QByteArray& reply);
 
 private slots:
     void updateActions(const QItemSelection &selection);
@@ -99,6 +105,7 @@ private:
 
     ReferenceWidget *referenceWidget;
     SlipboxWidget *slipboxWidget;
+    QSimpleUpdater *m_updater;
     QFont menuItemBoldFont, menuItemRegularFont;
     QAction *collectorViewAct;
     QAction *slipboxViewAct;

@@ -48,8 +48,8 @@
 **
 ****************************************************************************/
 
+#include "constants.h"
 #include "mainwindow.h"
-
 #include <QApplication>
 
 //! [0]
@@ -57,6 +57,8 @@ int main(int argc, char *argv[])
 {
     qSetMessagePattern("%{file}(%{line}): %{message}");
     QApplication app(argc, argv);
+    app.setApplicationName(APPLICATION_NAME);
+    app.setApplicationVersion(APPLICATION_VERSION);
     MainWindow mw;
     mw.show();
     return app.exec();

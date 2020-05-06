@@ -1,3 +1,6 @@
 [submodule "src/third-parties/qmarkdowntextedit"]
 	path = src/third-parties/qmarkdowntextedit
 	url = https://github.com/pbek/qmarkdowntextedit.git
+[submodule "src/third-parties/QSimpleUpdater"]
+	path = src/third-parties/QSimpleUpdater
+	url = https://github.com/alex-spataru/QSimpleUpdater.git

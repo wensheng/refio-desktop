@@ -16,6 +16,7 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QDateTime>
+#include <QMessageBox>
 #include <vector>
 #include <numeric>
 #include <algorithm>
@@ -28,7 +29,11 @@
 MainWindow::MainWindow() : QMainWindow()
 {
     lib_id = 1;
+
     setup_db(); // lib_id and iCodeSeq should be reset here
+
+    m_updater = QSimpleUpdater::getInstance();
+
     referenceWidget = new ReferenceWidget(lib_id, this);
     slipboxWidget = new SlipboxWidget(this);
     isSlipbox = false;
@@ -226,6 +231,10 @@ void MainWindow::createMenus()
     QAction *documentationAct = new QAction(tr("&Documentation"));
     helpMenu->addAction(documentationAct);
     connect(documentationAct, &QAction::triggered, this, &MainWindow::openDocumentationWebpage);
+
+    QAction *checkUpdatesAct = new QAction(tr("&Check for updates"));
+    helpMenu->addAction(checkUpdatesAct);
+    connect(checkUpdatesAct, &QAction::triggered, this, &MainWindow::checkForUpdates);
 
     QAction *aboutAct = new QAction(tr("&About Refio"));
     helpMenu->addAction(aboutAct);
@@ -588,4 +597,17 @@ QByteArray MainWindow::genICodeSeq()
         byteArray.append(v & 0xff);
     }
     return byteArray;
+}
+
+void MainWindow::checkForUpdates()
+{
+    m_updater->setModuleVersion(UPDATE_DEFS_URL, APPLICATION_VERSION); //installed version
+    m_updater->setNotifyOnFinish(UPDATE_DEFS_URL, false);
+    m_updater->setNotifyOnUpdate(UPDATE_DEFS_URL, true);
+    m_updater->setUseCustomAppcast(UPDATE_DEFS_URL, false);
+    m_updater->setDownloaderEnabled(UPDATE_DEFS_URL, true);
+    m_updater->setMandatoryUpdate(UPDATE_DEFS_URL, false);
+
+    /* Check for updates */
+    m_updater->checkForUpdates(UPDATE_DEFS_URL);
 }

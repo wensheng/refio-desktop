@@ -5,6 +5,7 @@ CONFIG += c++17
 #requires(qtConfig(listview))
 
 include ($$PWD/third-parties/qmarkdowntextedit/qmarkdowntextedit.pri)
+include ($$PWD/third-parties/QSimpleUpdater/QSimpleUpdater.pri)
 
 SOURCES   += adddialog.cpp \
             about_refio_dialog.cpp \
@@ -55,6 +56,8 @@ HEADERS   += adddialog.h \
             tablemodel.h
 
 RESOURCES += application.qrc
+
+INCLUDEPATH += C:/Program Files/OpenSSL-Win64/include/openssl
 
 # install
 target.path = refio_desktop
