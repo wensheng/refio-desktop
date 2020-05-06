@@ -24,8 +24,6 @@ SOURCES   += adddialog.cpp \
             newaddresstab.cpp \
             settings_dialog.cpp \
             standalone_editor.cpp \
-            treemodel.cpp \
-            treeitem.cpp \
             mtreeview.cpp \
             mtree_item.cpp \
             mtree_model.cpp \
@@ -48,8 +46,6 @@ HEADERS   += adddialog.h \
             newaddresstab.h \
             settings_dialog.h \
             standalone_editor.h \
-            treemodel.h \
-            treeitem.h \
             mtreeview.h \
             mtree_item.h \
             mtree_model.h \
