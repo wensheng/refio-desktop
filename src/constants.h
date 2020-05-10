@@ -4,6 +4,7 @@
 #define APPLICATION_VERSION "0.1"
 #define APPLICATION_NAME "RefioDesktop"
 #define MAIN_WINDOW_NAME "main_window"
+#define REF_COLLECTIONS_WIDGET_NAME "ref_collections_widget"
 #define REF_ENTRIES_WIDGET_NAME "ref_entries_widget"
 #define REF_ENTRY_DETAILS_WIDGET_NAME "ref_entry_details_widget"
 #define REF_ENTRY_DETAILS_INFO_TAB_NAME "ref_entry_details_info_tab"

@@ -1,5 +1,7 @@
 /****************************************************************************
 **
+** model data structure:
+**   MTreeItem(id, {title, id, parent, icode, collection_id, info, created})
 **
 ****************************************************************************/
 
@@ -53,6 +55,7 @@ EntriesWidget::EntriesWidget(QWidget *parent)
 
 /*
  * called by CollectionsWidget when click on a collection
+ * also when program start a default collection is selected
  */
 void EntriesWidget::update(const MTreeItem *mtreeItem){
     collection_id = mtreeItem->itemId();
@@ -152,6 +155,7 @@ void EntriesWidget::insertRow()
         const QModelIndex child = model->index(index.row() + 1, column, index.parent());
         model->setData(child, QVariant(tr("[No data]")), Qt::EditRole);
     }
+    treeView->selectionModel()->setCurrentIndex(model->index(index.row() + 1, 0, index.parent()), QItemSelectionModel::SelectCurrent);
 }
 
 void EntriesWidget::removeRow()
@@ -162,6 +166,10 @@ void EntriesWidget::removeRow()
         updateActions();
 }
 
+/*
+ * called when user click an entry
+ * also called when a new entry is inserted
+ * */
 void EntriesWidget::updateActions()
 {
     const bool hasSelection = !treeView->selectionModel()->selection().isEmpty();
@@ -260,7 +268,38 @@ void EntriesWidget::dragEnterEvent(QDragEnterEvent *event)
 
 void EntriesWidget::handlePastedData(const QMimeData *data)
 {
+    int item_id = 0;
+    QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
+    QSqlQuery query(db);
+    query.prepare("INSERT INTO ref_entries (collection_id, parent, icode, type, title, info, created)"
+                      "values (:ci, :parent, :icode, :type, :title, :info, :created)");
+    QString title, etype, icode, info = QString("");
+    QString created = QDateTime::currentDateTime().toString(Qt::ISODate);
     if(data->hasText()){
+        if(data->text().startsWith("http://") || data->text().startsWith("https://")){
+            etype = "Webpage";
+            title = data->text();
+        }else{
+            etype = "Note";
+            QStringList ss = data->text().split("\n");
+            title = ss.at(0);
+            info = data->text();
+        }
+        query.bindValue(":type", etype);
+        query.bindValue(":title", title);
+        MainWindow * mainWindow = qobject_cast<MainWindow *>(QApplication::activeWindow());
+        icode = mainWindow->getNextICode();
+        query.bindValue(":ci", collection_id);
+        query.bindValue(":parent", 0);
+        query.bindValue(":icode", icode);
+        query.bindValue(":info", info);
+        query.bindValue(":created", created);
+        if(!query.exec()){
+            qDebug() << query.lastError().text();
+        }else{
+            qDebug() << "lastInsertId()=" << query.lastInsertId();
+            item_id = query.lastInsertId().toInt();
+        }
         qDebug() << data->text();
     }
     if (data->hasUrls()){
@@ -270,4 +309,20 @@ void EntriesWidget::handlePastedData(const QMimeData *data)
         }
         qDebug() << filePathList;
     }
+
+    const QModelIndex index = treeView->selectionModel()->currentIndex();
+    MTreeModel *model = (MTreeModel *)treeView->model();
+    if (!model->insertRow(index.row() + 1, index.parent())){
+        return;
+    }
+
+    model->setData(model->index(index.row() + 1, 0, index.parent()), title, Qt::EditRole);
+    model->setData(model->index(index.row() + 1, 1, index.parent()), item_id, Qt::EditRole);
+    model->setData(model->index(index.row() + 1, 2, index.parent()), "0", Qt::EditRole);
+    model->setData(model->index(index.row() + 1, 3, index.parent()), icode, Qt::EditRole);
+    model->setData(model->index(index.row() + 1, 4, index.parent()), collection_id, Qt::EditRole);
+    model->setData(model->index(index.row() + 1, 5, index.parent()), info, Qt::EditRole);
+    model->setData(model->index(index.row() + 1, 6, index.parent()), created, Qt::EditRole);
+    treeView->selectionModel()->setCurrentIndex(model->index(index.row() + 1, 0, index.parent()), QItemSelectionModel::SelectCurrent);
+    updateActions();
 }

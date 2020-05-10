@@ -3,38 +3,90 @@
 **
 ****************************************************************************/
 
+#include "constants.h"
 #include "settings_dialog.h"
+#include "ui_settings_dialog.h"
+#include "common.h"
+#include "mainwindow.h"
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
 
 #include <QtWidgets>
 
 SettingsDialog::SettingsDialog(QWidget *parent)
-    : QDialog(parent)
+    : QDialog(parent),
+      ui(new Ui::SettingsDialog)
 {
+    libChanged = false;
     Qt::WindowFlags flags(Qt::Dialog | Qt::WindowStaysOnTopHint | Qt::WindowTitleHint);
     setWindowFlags(flags);
-    auto nameLabel = new QLabel(tr("Refio"));
-    auto versionLabel = new QLabel(tr("0.1"));
-    auto addressLabel = new QLabel(tr("Address"));
-    auto okButton = new QPushButton(tr("Close"));
+    ui->setupUi(this);
 
-    auto gLayout = new QGridLayout;
-    gLayout->setColumnStretch(1, 2);
-    gLayout->addWidget(nameLabel, 0, 0);
-    gLayout->addWidget(versionLabel, 0, 1);
+    QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
+    QSqlQuery query(db);
 
-    gLayout->addWidget(addressLabel, 1, 0, Qt::AlignLeft|Qt::AlignTop);
-    //gLayout->addWidget(addressText, 1, 1, Qt::AlignLeft);
-
-    auto buttonLayout = new QHBoxLayout;
-    buttonLayout->addWidget(okButton);
-
-    gLayout->addLayout(buttonLayout, 2, 1, Qt::AlignRight);
-
-    auto mainLayout = new QVBoxLayout;
-    mainLayout->addLayout(gLayout);
-    setLayout(mainLayout);
-
-    connect(okButton, &QAbstractButton::clicked, this, &QDialog::accept);
+    if(!query.exec("SELECT id, name FROM ref_libraries")){
+        qDebug() << query.lastError().text();
+    }else{
+        while (query.next()) {
+            ui->libraryComboBox->addItem(query.value(1).toString());
+            libIds.append(query.value(0).toInt());
+        }
+    }
+    connect(ui->createNewLibPushButton, &QAbstractButton::clicked, this, &SettingsDialog::createNewLibrary);
+    connect(ui->libraryComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){ libChanged = true; });
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &SettingsDialog::acceptChange);
 
     setWindowTitle(tr("Refio Preferences"));
+}
+
+void SettingsDialog::createNewLibrary()
+{
+    QString name = QInputDialog::getText(this, "Create New Library", "New Library Name").trimmed();
+    if(!name.isEmpty()){
+        QByteArray iCodeSeq = genICodeSeq();
+        QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
+        QSqlQuery query(db);
+        query.prepare( "INSERT INTO ref_libraries (name, icodeseq, created) VALUES (:name, :icodeseq, :created)");
+        query.bindValue(":name", name);
+        query.bindValue(":icodeseq", iCodeSeq);
+        query.bindValue(":created", QDateTime::currentDateTime().toString());
+        if( !query.exec() ){
+            qDebug() << "Error inserting first library into table:\n" << query.lastError();
+            return;
+        }
+        int new_lib_id = query.lastInsertId().toInt();
+        ui->libraryComboBox->addItem(name);
+        libIds.append(new_lib_id);
+        ui->libraryComboBox->setCurrentIndex(ui->libraryComboBox->count()-1);
+
+        query.prepare( "INSERT INTO ref_collections (lib_id, name, created)"
+                       " VALUES (:lib_id, \"Default Collection\", :created)");
+        query.bindValue( ":lib_id", new_lib_id);
+        query.bindValue( ":created", QDateTime::currentDateTime().toString());
+        if( !query.exec() ){
+            qDebug() << "Error inserting first collection into table:\n" << query.lastError();
+        }
+    }
+}
+
+void SettingsDialog::acceptChange()
+{
+    if(libChanged){
+        QMessageBox::StandardButton reply;
+        QString("%1/%2-%3.txt").arg("~", "Tom", "Jane");
+        QString areYouSure = QString("Are you sure changing library to '%1'?").arg(ui->libraryComboBox->currentText());
+
+        reply = QMessageBox::question(this, "Save Change", areYouSure, QMessageBox::Yes|QMessageBox::No);
+        if (reply == QMessageBox::Yes) {
+            //MainWindow *mainWin = qobject_cast<MainWindow*>(getMainWindow());
+            QMainWindow *mainWin = getMainWindow();
+            CollectionsWidget *w = mainWin->findChild<CollectionsWidget *>(REF_COLLECTIONS_WIDGET_NAME);
+            w->setupModel(libIds.at(ui->libraryComboBox->currentIndex()));
+            qDebug() << "Yes was clicked";
+        } else {
+            qDebug() << "Yes was *not* clicked";
+        }
+    }
 }

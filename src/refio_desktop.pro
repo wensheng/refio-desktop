@@ -32,6 +32,7 @@ SOURCES   += adddialog.cpp \
 HEADERS   += adddialog.h \
             about_refio_dialog.h \
             collections_widget.h \
+            common.h \
             constants.h \
             entry_info_tab.h \
             markdown_document.h \
@@ -60,4 +61,5 @@ target.path = refio_desktop
 INSTALLS += target
 
 FORMS += \
-    entry_info_tab.ui
+    entry_info_tab.ui \
+    settings_dialog.ui

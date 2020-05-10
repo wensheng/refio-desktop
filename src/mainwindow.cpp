@@ -445,101 +445,6 @@ void MainWindow::setup_db()
         QSqlQuery query(db);
         if(createTables){
             bool success;
-            /*
-            success = query.exec("CREATE TABLE ref_libraries("
-                       "  id integer not null primary key,"
-                       "  name text not null default \"My Library\","
-                       "  icodeseq blob not null,"
-                       "  created text);");
-            if(!success){
-                qDebug() << query.lastError().text();
-                return;
-            }
-            success = query.exec("CREATE TABLE ref_collections("
-                       "  id integer not null primary key,"
-                       "  lib_id integer not null default 0,"
-                       "  parent integer not null default 0,"
-                       "  name text not null,"
-                       "  created text);");
-            if(!success){
-                qDebug() << query.lastError().text();
-                return;
-            }
-            //query.finish();
-            success = query.exec("CREATE TABLE type_enum("
-                       "  type text not null primary key,"
-                       "  structure text not null default \"\");");
-            if(!success){
-                qDebug() << query.lastError().text();
-                return;
-            }
-            //query.finish();
-            query.exec("insert into type_enum(type) values(\"Webpage\")");
-            query.exec("insert into type_enum(type) values(\"Note\")");
-            query.exec("insert into type_enum(type) values(\"Article\")");
-            query.exec("insert into type_enum(type) values(\"Files\")");
-            query.exec("insert into type_enum(type) values(\"Book\")");
-            query.exec("insert into type_enum(type) values(\"Book Section\")");
-            success = query.exec("CREATE TABLE ref_entries("
-                       "  id integer not null primary key,"
-                       "  collection_id integer not null default 0,"
-                       "  parent integer not null default 0,"
-                       "  icode text not null,"
-                       "  title text not null,"
-                       "  type text not null references type_enum(type),"
-                       "  info text,"
-                       "  created text);");
-            if(!success){
-                qDebug() << query.lastError().text();
-                return;
-            }
-            //query.finish();
-            success = query.exec("CREATE TABLE ref_notes("
-                       "  id integer not null primary key,"
-                       "  entry_id integer not null default 0,"
-                       "  title text,"
-                       "  body text,"
-                       "  created text,"
-                       "  lastmodified text);");
-            if(!success){
-                qDebug() << query.lastError().text();
-                return;
-            }
-            query.finish();
-            success = query.exec("CREATE VIRTUAL TABLE entry_index USING fts5("
-                       "  title, info, content='ref_entries', content_rowid='id');");
-            if(!success){
-                qDebug() << query.lastError().text();
-                return;
-            }
-            query.finish();
-            success = query.exec("CREATE TRIGGER entry_ai AFTER INSERT on ref_entries BEGIN"
-                       "  INSERT INTO entry_index(rowid, title, info)"
-                       "                  VALUES (new.id, new.title, new.info);"
-                       "END;");
-            if(!success){
-                qDebug() << query.lastError().text();
-                return;
-            }
-            query.finish();
-            success = query.exec("CREATE TRIGGER entry_ad AFTER DELETE on ref_entries BEGIN"
-                       "  DELETE FROM entry_index WHERE rowid=old.id;"
-                       "END;");
-            if(!success){
-                qDebug() << query.lastError().text();
-                return;
-            }
-            query.finish();
-            success = query.exec("CREATE TRIGGER entry_au AFTER UPDATE on ref_entries BEGIN"
-                       "  DELETE FROM entry_index WHERE rowid=old.id;"
-                       "  INSERT INTO entry_index(rowid, title, info)"
-                       "                  VALUES (new.id, new.title, new.info);"
-                       "END;");
-            if(!success){
-                qDebug() << query.lastError().text();
-            }
-            query.finish();
-            */
             QFile schemaFile(":/schema.sql");
             if(!schemaFile.open(QFile::ReadOnly)){
                 qDebug() << "Could not read schema file";
@@ -557,7 +462,7 @@ void MainWindow::setup_db()
                 }
             }
 
-            query.prepare( "INSERT INTO ref_libraries (icodeseq, created) VALUES (:icodeseq, :created)");
+            query.prepare( "INSERT INTO ref_libraries (id, icodeseq, created) VALUES (1, :icodeseq, :created)");
             iCodeSeq = genICodeSeq();
             //qDebug() << iCodeSeq.toHex();
             query.bindValue( ":icodeseq", iCodeSeq);
@@ -565,7 +470,12 @@ void MainWindow::setup_db()
             if( !query.exec() ){
                 qDebug() << "Error inserting first library into table:\n" << query.lastError();
             }
-            //qDebug() << genICodeSeq();
+            query.prepare( "INSERT INTO ref_collections (lib_id, name, created)"
+                           " VALUES (1, \"Default Collection\", :created)");
+            query.bindValue( ":created", QDateTime::currentDateTime().toString());
+            if( !query.exec() ){
+                qDebug() << "Error inserting first collection into table:\n" << query.lastError();
+            }
         }else{
             // TODO: use last library number
             query.prepare("SELECT id, name, icodeseq FROM ref_libraries LIMIT 1");
@@ -611,3 +521,4 @@ void MainWindow::checkForUpdates()
     /* Check for updates */
     m_updater->checkForUpdates(UPDATE_DEFS_URL);
 }
+

@@ -13,6 +13,7 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
+#include <QDebug>
 
 CollectionsWidget::CollectionsWidget(int lib_id, QWidget *parent)
     : QWidget(parent),
@@ -20,11 +21,13 @@ CollectionsWidget::CollectionsWidget(int lib_id, QWidget *parent)
       standardItemModel(new QStandardItemModel(this)),
       lib_id(lib_id)
 {
+    setObjectName(REF_COLLECTIONS_WIDGET_NAME);
+    /*
     QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
     QList<QVector<QVariant>> modelData;
-    modelData.push_back({"Default Collection", 0, 0});
     QSqlQuery query(db);
-    query.prepare("SELECT name, id, parent FROM ref_collections where lib_id=:lib_id");
+    query.prepare("SELECT name, id, parent FROM ref_collections"
+                  " where lib_id=:lib_id ORDER BY id DESC");
     query.bindValue(":lib_id", lib_id);
     if(!query.exec()){
         qDebug() << query.lastError().text();
@@ -37,9 +40,23 @@ CollectionsWidget::CollectionsWidget(int lib_id, QWidget *parent)
             modelData.push_back(result);
         }
     }
+    qDebug() << modelData;
 
     QVector<QVariant> headers = {"name", 0, 0};
     mtreeModel = new MTreeModel(headers, modelData);
+    treeView->setModel(mtreeModel);
+    treeView->setHeaderHidden(true);
+    treeView->expandAll();
+    treeView->resizeColumnToContents(0);
+    for (int column = 1; column < mtreeModel->columnCount(); ++column)
+        treeView->setColumnHidden(column, true);
+
+    //selection changes shall trigger a slot
+    connect(treeView->selectionModel(), &QItemSelectionModel::selectionChanged,
+                this, &CollectionsWidget::selectionChanged);
+    connect(treeView->model(), &QAbstractItemModel::dataChanged, this, &CollectionsWidget::handleEdit);
+    */
+    setupModel(lib_id);
 
     auto tb = new QToolBar();
 
@@ -61,17 +78,6 @@ CollectionsWidget::CollectionsWidget(int lib_id, QWidget *parent)
     connect(saveAct, &QAction::triggered, this, &CollectionsWidget::closeFile);
     tb->addAction(saveAct);
 
-    treeView->setModel(mtreeModel);
-    treeView->setHeaderHidden(true);
-    treeView->expandAll();
-    treeView->resizeColumnToContents(0);
-    for (int column = 1; column < mtreeModel->columnCount(); ++column)
-        treeView->setColumnHidden(column, true);
-
-    //selection changes shall trigger a slot
-    connect(treeView->selectionModel(), &QItemSelectionModel::selectionChanged,
-                this, &CollectionsWidget::selectionChanged);
-    connect(treeView->model(), &QAbstractItemModel::dataChanged, this, &CollectionsWidget::handleEdit);
 
     // here selectionChanged will be invoked, in there will update entriesWidget
     // but entriesWidget is not instantiated at this time, so program will crash here
@@ -85,6 +91,43 @@ CollectionsWidget::CollectionsWidget(int lib_id, QWidget *parent)
     layout->setContentsMargins(0,0,0,0);
     setLayout(layout);
     qDebug() << metaObject()->className();
+}
+
+void CollectionsWidget::setupModel(int lib_id)
+{
+    QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
+    QList<QVector<QVariant>> modelData;
+    QSqlQuery query(db);
+    query.prepare("SELECT name, id, parent FROM ref_collections"
+                  " where lib_id=:lib_id ORDER BY id DESC");
+    query.bindValue(":lib_id", lib_id);
+    if(!query.exec()){
+        qDebug() << query.lastError().text();
+    }else{
+        while (query.next()) {
+            QVector<QVariant> result;
+            result.push_back(query.value(0).toString()); // name
+            result.push_back(query.value(1).toInt()); // id
+            result.push_back(query.value(2).toInt()); // parent
+            modelData.push_back(result);
+        }
+    }
+    qDebug() << modelData;
+    QVector<QVariant> headers = {"name", 0, 0};
+    MTreeModel *mtreeModel = new MTreeModel(headers, modelData);
+    auto oldModel = treeView->model();
+    treeView->setModel(mtreeModel);
+    delete oldModel;
+    treeView->setHeaderHidden(true);
+    treeView->expandAll();
+    treeView->resizeColumnToContents(0);
+    for (int column = 1; column < mtreeModel->columnCount(); ++column)
+        treeView->setColumnHidden(column, true);
+
+    //selection changes shall trigger a slot
+    connect(treeView->selectionModel(), &QItemSelectionModel::selectionChanged,
+                this, &CollectionsWidget::selectionChanged);
+    connect(treeView->model(), &QAbstractItemModel::dataChanged, this, &CollectionsWidget::handleEdit);
 }
 
 void CollectionsWidget::newFile()
@@ -106,7 +149,8 @@ void CollectionsWidget::selectionChanged(const QItemSelection &newSelection, con
 {
     //get the text of the selected item
     const QModelIndex index = treeView->selectionModel()->currentIndex();
-    const MTreeItem *item = mtreeModel->getItem(index);
+    MTreeModel *model = qobject_cast<MTreeModel*>(treeView->model());
+    const MTreeItem *item = model->getItem(index);
     EntriesWidget *entriesWidget = parentWidget()->findChild<EntriesWidget *>(REF_ENTRIES_WIDGET_NAME);
     entriesWidget->update(item);
 

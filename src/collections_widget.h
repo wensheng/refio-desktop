@@ -24,6 +24,7 @@ class CollectionsWidget : public QWidget
 
 public:
     CollectionsWidget(int lib_id, QWidget *parent = nullptr);
+    void setupModel(int lib_id);
 
 public slots:
     void handleEdit();
@@ -41,7 +42,7 @@ private slots:
 private:
     QTreeView *treeView;
     QStandardItemModel *standardItemModel;
-    MTreeModel *mtreeModel;
+    //MTreeModel *mtreeModel;
     int lib_id;
 };
 
