@@ -15,31 +15,6 @@ ReferenceWidget::ReferenceWidget(int lib_id, QWidget *parent)
     entriesWidget = new EntriesWidget,
     entryDetailsWidget = new EntryDetailsWidget;
 
-    /*
-    auto tb = new QToolBar();
-
-    const QIcon newIcon = QIcon::fromTheme("document-new", QIcon(":/images/new.png"));
-    QAction *newAct = new QAction(newIcon, tr("&New"), this);
-    newAct->setShortcuts(QKeySequence::New);
-    newAct->setStatusTip(tr("Create a new file"));
-    connect(newAct, &QAction::triggered, this, &ReferenceWidget::newFile);
-    tb->addAction(newAct);
-
-    const QIcon openIcon = QIcon::fromTheme("document-open", QIcon(":/images/open.png"));
-    QAction *openAct = new QAction(openIcon, tr("&Open..."), this);
-    openAct->setShortcuts(QKeySequence::Open);
-    openAct->setStatusTip(tr("Open an existing file"));
-    connect(openAct, &QAction::triggered, this, &ReferenceWidget::openFile);
-    tb->addAction(openAct);
-
-    const QIcon saveIcon = QIcon::fromTheme("document-save", QIcon(":/images/save.png"));
-    QAction *saveAct = new QAction(saveIcon, tr("&Save"), this);
-    saveAct->setShortcuts(QKeySequence::Save);
-    saveAct->setStatusTip(tr("Save the document to disk"));
-    connect(saveAct, &QAction::triggered, this, &ReferenceWidget::closeFile);
-    tb->addAction(saveAct);
-    */
-
     //setSizePolicy(QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding));
     QHBoxLayout *hBoxLayout = new QHBoxLayout;
     innerSplitter = new QSplitter(Qt::Horizontal, rightWidget);

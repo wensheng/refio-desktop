@@ -2,6 +2,8 @@
 #define CONSTANTS_H
 
 #define APPLICATION_VERSION "0.1"
+#define ORGANIZATION_NAME "Refio"
+#define ORGANIZATION_DOMAIN "refio.org"
 #define APPLICATION_NAME "RefioDesktop"
 #define MAIN_WINDOW_NAME "main_window"
 #define REF_COLLECTIONS_WIDGET_NAME "ref_collections_widget"

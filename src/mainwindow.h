@@ -58,6 +58,7 @@
 #include <QMainWindow>
 #include <QDesktopServices>
 #include <QSqlDatabase>
+#include <QSettings>
 
 class MainWindow : public QMainWindow
 {
@@ -99,8 +100,11 @@ private slots:
     void toggleStandardView();
     void toggleStackedView();
 private:
+    void closeEvent(QCloseEvent *event);
     void createMenus();
     void setup_db();
+    void readSettings();
+    void saveSettings();
     QByteArray genICodeSeq();
 
     ReferenceWidget *referenceWidget;

@@ -36,8 +36,8 @@ MainWindow::MainWindow() : QMainWindow()
 
     referenceWidget = new ReferenceWidget(lib_id, this);
     slipboxWidget = new SlipboxWidget(this);
-    isSlipbox = false;
-    isStacked = false;
+    readSettings();
+
     slipboxWidget->hide();
 
     setCentralWidget(referenceWidget);
@@ -48,6 +48,12 @@ MainWindow::MainWindow() : QMainWindow()
     resize(mainScreenSize.width() * 0.7f, mainScreenSize.height() * 0.7f);
     setWindowTitle("Refio");
     setObjectName(MAIN_WINDOW_NAME);
+
+    if(isStacked){
+        standardLayoutAct->setFont(menuItemRegularFont);
+        stackedLayoutAct->setFont(menuItemBoldFont);
+        referenceWidget->toggleRightView();
+    }
 }
 
 MainWindow::~MainWindow()
@@ -55,6 +61,30 @@ MainWindow::~MainWindow()
     QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
     db.close();
     QSqlDatabase::removeDatabase( QSqlDatabase::defaultConnection );
+}
+
+void MainWindow::readSettings()
+{
+    QSettings settings;
+    settings.beginGroup("MainWindow");
+    isSlipbox = settings.value("isSlipbox", false).toBool();
+    isStacked = settings.value("isStacked", false).toBool();
+    settings.endGroup();
+}
+
+void MainWindow::saveSettings()
+{
+    QSettings settings;
+    settings.beginGroup("MainWindow");
+    settings.setValue("isSlipbox", isSlipbox);
+    settings.setValue("isStacked", isStacked);
+    settings.endGroup();
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    saveSettings();
+    event->accept();
 }
 
 void MainWindow::createMenus()

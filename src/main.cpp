@@ -57,8 +57,11 @@ int main(int argc, char *argv[])
 {
     qSetMessagePattern("%{file}(%{line}): %{message}");
     QApplication app(argc, argv);
+    app.setOrganizationName(ORGANIZATION_NAME);
+    app.setOrganizationDomain(ORGANIZATION_DOMAIN);
     app.setApplicationName(APPLICATION_NAME);
     app.setApplicationVersion(APPLICATION_VERSION);
+
     MainWindow mw;
     mw.show();
     return app.exec();
