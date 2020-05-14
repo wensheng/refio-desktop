@@ -180,7 +180,8 @@ void EntriesWidget::updateActions()
         MTreeModel *model = (MTreeModel *)treeView->model();
         //QVector<QVariant> rowData = model->getRowData(idx);
         MTreeItem *treeItem = model->getItem(idx);
-        EntryDetailsWidget *detailsWidget = parentWidget()->findChild<EntryDetailsWidget*>(REF_ENTRY_DETAILS_WIDGET_NAME);
+        //EntryDetailsWidget *detailsWidget = parentWidget()->findChild<EntryDetailsWidget*>(REF_ENTRY_DETAILS_WIDGET_NAME);
+        EntryDetailsWidget *detailsWidget = MainWindow::instance()->findChild<EntryDetailsWidget*>(REF_ENTRY_DETAILS_WIDGET_NAME);
         detailsWidget->updateDetail(treeItem);
         //treeView->closePersistentEditor(treeView->selectionModel()->currentIndex());
 

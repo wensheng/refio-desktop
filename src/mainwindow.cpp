@@ -29,7 +29,7 @@
 MainWindow::MainWindow() : QMainWindow()
 {
     lib_id = 1;
-
+    qApp->setProperty("mainWindow", QVariant::fromValue<MainWindow *>(this));
     setup_db(); // lib_id and iCodeSeq should be reset here
 
     m_updater = QSimpleUpdater::getInstance();
@@ -56,11 +56,30 @@ MainWindow::MainWindow() : QMainWindow()
     }
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow(){
     QSqlDatabase db = QSqlDatabase::database(DATABASE_NAME);
     db.close();
     QSqlDatabase::removeDatabase( QSqlDatabase::defaultConnection );
+}
+
+MainWindow *MainWindow::instance() {
+    return qApp ? qApp->property("mainWindow").value<MainWindow *>() : nullptr;
+}
+
+CollectionsWidget *MainWindow::collectionWidget(){
+    MainWindow *mainWin =  qApp->property("mainWindow").value<MainWindow *>();
+    if(mainWin){
+        return mainWin->findChild<CollectionsWidget *>(REF_COLLECTIONS_WIDGET_NAME);
+    }
+    return nullptr;
+}
+
+EntriesWidget *MainWindow::entriesWidget(){
+    MainWindow *mainWin =  qApp->property("mainWindow").value<MainWindow *>();
+    if(mainWin){
+        return mainWin->findChild<EntriesWidget *>(REF_ENTRIES_WIDGET_NAME);
+    }
+    return nullptr;
 }
 
 void MainWindow::readSettings()

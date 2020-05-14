@@ -80,9 +80,9 @@ void SettingsDialog::acceptChange()
 
         reply = QMessageBox::question(this, "Save Change", areYouSure, QMessageBox::Yes|QMessageBox::No);
         if (reply == QMessageBox::Yes) {
-            //MainWindow *mainWin = qobject_cast<MainWindow*>(getMainWindow());
-            QMainWindow *mainWin = getMainWindow();
-            CollectionsWidget *w = mainWin->findChild<CollectionsWidget *>(REF_COLLECTIONS_WIDGET_NAME);
+            //QMainWindow *mainWin = getMainWindow();
+            //CollectionsWidget *w = mainWin->findChild<CollectionsWidget *>(REF_COLLECTIONS_WIDGET_NAME);
+            CollectionsWidget *w = MainWindow::collectionWidget();
             w->setupModel(libIds.at(ui->libraryComboBox->currentIndex()));
             qDebug() << "Yes was clicked";
         } else {

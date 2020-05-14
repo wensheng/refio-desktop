@@ -151,7 +151,8 @@ void CollectionsWidget::selectionChanged(const QItemSelection &newSelection, con
     const QModelIndex index = treeView->selectionModel()->currentIndex();
     MTreeModel *model = qobject_cast<MTreeModel*>(treeView->model());
     const MTreeItem *item = model->getItem(index);
-    EntriesWidget *entriesWidget = parentWidget()->findChild<EntriesWidget *>(REF_ENTRIES_WIDGET_NAME);
+    //EntriesWidget *entriesWidget = parentWidget()->findChild<EntriesWidget *>(REF_ENTRIES_WIDGET_NAME);
+    EntriesWidget *entriesWidget = MainWindow::entriesWidget();
     entriesWidget->update(item);
 
     QString selectedText = index.data(Qt::DisplayRole).toString();

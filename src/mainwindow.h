@@ -53,6 +53,8 @@
 
 #include "reference_widget.h"
 #include "slipbox_widget.h"
+#include "collections_widget.h"
+#include "entries_widget.h"
 #include "QSimpleUpdater.h"
 
 #include <QMainWindow>
@@ -68,6 +70,9 @@ public:
     MainWindow();
     ~MainWindow();
     QString getNextICode();
+    static MainWindow *instance();
+    static CollectionsWidget *collectionWidget();
+    static EntriesWidget *entriesWidget();
 
 public slots:
     void checkForUpdates();

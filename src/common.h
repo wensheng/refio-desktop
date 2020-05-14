@@ -28,6 +28,10 @@ QByteArray genICodeSeq()
     return byteArray;
 }
 
+/*
+ * this is not used
+ * we use static MainWindow::instance() instead
+ */
 QMainWindow* getMainWindow()
 {
     for(QWidget *w: QApplication::topLevelWidgets()){
